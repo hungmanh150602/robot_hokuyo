@@ -1,0 +1,72 @@
+#include <iostream>
+#include <string>
+#include <cstring>
+
+#include <unistd.h>
+#include <arpa/inet.h>
+#include <sys/socket.h>
+
+int main()
+{
+    const char *server_ip = "192.168.0.102";
+    int server_port = 1234;
+
+    // Tạo socket
+    int sock = socket(AF_INET, SOCK_STREAM, 0);
+
+    if (sock < 0)
+    {
+        std::cout << "Cannot create socket\n";
+        return -1;
+    }
+
+    struct sockaddr_in server_addr;
+
+    server_addr.sin_family = AF_INET;
+    server_addr.sin_port = htons(server_port);
+
+    inet_pton(AF_INET, server_ip, &server_addr.sin_addr);
+
+    // Kết nối ESP32
+    if (connect(sock,
+                (struct sockaddr *)&server_addr,
+                sizeof(server_addr)) < 0)
+    {
+        std::cout << "Connection failed\n";
+
+        close(sock);
+
+        return -1;
+    }
+
+    std::cout << "Connected to ESP32\n";
+
+    // Gửi lệnh chạy
+    std::string msg1 = "30,-30\n";
+
+    send(sock,
+         msg1.c_str(),
+         msg1.length(),
+         0);
+
+    std::cout << "Sent: " << msg1;
+
+    // Chờ 1 giây
+    sleep(2);
+
+    // Gửi lệnh dừng
+    std::string msg2 = "0,0\n";
+
+    send(sock,
+         msg2.c_str(),
+         msg2.length(),
+         0);
+
+    std::cout << "Sent: " << msg2;
+
+    sleep(1);
+    // Đóng socket
+    close(sock);
+
+    return 0;
+}

@@ -1,0 +1,142 @@
+{
+	"configurations" : 
+	[
+		{
+			"directories" : 
+			[
+				{
+					"build" : ".",
+					"hasInstallRule" : true,
+					"jsonFile" : "directory-.-Debug-cc898ed9f6b790f1089a.json",
+					"minimumCMakeVersion" : 
+					{
+						"string" : "3.12"
+					},
+					"projectIndex" : 0,
+					"source" : ".",
+					"targetIndexes" : 
+					[
+						0,
+						1,
+						2,
+						3,
+						4,
+						5,
+						6,
+						7,
+						8,
+						9
+					]
+				}
+			],
+			"name" : "Debug",
+			"projects" : 
+			[
+				{
+					"directoryIndexes" : 
+					[
+						0
+					],
+					"name" : "lidar_hokuyo",
+					"targetIndexes" : 
+					[
+						0,
+						1,
+						2,
+						3,
+						4,
+						5,
+						6,
+						7,
+						8,
+						9
+					]
+				}
+			],
+			"targets" : 
+			[
+				{
+					"directoryIndex" : 0,
+					"id" : "fake_odom::@6890427a1f51a3e7e1df",
+					"jsonFile" : "target-fake_odom-Debug-f746d8f02e0d715e46b1.json",
+					"name" : "fake_odom",
+					"projectIndex" : 0
+				},
+				{
+					"directoryIndex" : 0,
+					"id" : "fake_odom_autogen::@6890427a1f51a3e7e1df",
+					"jsonFile" : "target-fake_odom_autogen-Debug-75084af688663a4724a9.json",
+					"name" : "fake_odom_autogen",
+					"projectIndex" : 0
+				},
+				{
+					"directoryIndex" : 0,
+					"id" : "lidar_hokuyo_uninstall::@6890427a1f51a3e7e1df",
+					"jsonFile" : "target-lidar_hokuyo_uninstall-Debug-30f87634531238d7f78d.json",
+					"name" : "lidar_hokuyo_uninstall",
+					"projectIndex" : 0
+				},
+				{
+					"directoryIndex" : 0,
+					"id" : "mainwindow::@6890427a1f51a3e7e1df",
+					"jsonFile" : "target-mainwindow-Debug-a252d3781c73bcca9dbe.json",
+					"name" : "mainwindow",
+					"projectIndex" : 0
+				},
+				{
+					"directoryIndex" : 0,
+					"id" : "mainwindow_autogen::@6890427a1f51a3e7e1df",
+					"jsonFile" : "target-mainwindow_autogen-Debug-b6fdd19e41403cc768c1.json",
+					"name" : "mainwindow_autogen",
+					"projectIndex" : 0
+				},
+				{
+					"directoryIndex" : 0,
+					"id" : "publish_lidar::@6890427a1f51a3e7e1df",
+					"jsonFile" : "target-publish_lidar-Debug-e4fccdde098a5ed0c88f.json",
+					"name" : "publish_lidar",
+					"projectIndex" : 0
+				},
+				{
+					"directoryIndex" : 0,
+					"id" : "publish_lidar_autogen::@6890427a1f51a3e7e1df",
+					"jsonFile" : "target-publish_lidar_autogen-Debug-e4f8d433fa00df59fd6b.json",
+					"name" : "publish_lidar_autogen",
+					"projectIndex" : 0
+				},
+				{
+					"directoryIndex" : 0,
+					"id" : "tcp_client::@6890427a1f51a3e7e1df",
+					"jsonFile" : "target-tcp_client-Debug-9382d81fc99ac1189519.json",
+					"name" : "tcp_client",
+					"projectIndex" : 0
+				},
+				{
+					"directoryIndex" : 0,
+					"id" : "tcp_client_autogen::@6890427a1f51a3e7e1df",
+					"jsonFile" : "target-tcp_client_autogen-Debug-e1d7bfc1c3e9db1300ca.json",
+					"name" : "tcp_client_autogen",
+					"projectIndex" : 0
+				},
+				{
+					"directoryIndex" : 0,
+					"id" : "uninstall::@6890427a1f51a3e7e1df",
+					"jsonFile" : "target-uninstall-Debug-5d4e9874f279710850dd.json",
+					"name" : "uninstall",
+					"projectIndex" : 0
+				}
+			]
+		}
+	],
+	"kind" : "codemodel",
+	"paths" : 
+	{
+		"build" : "/home/hungubuntu/ros2_ws/src/lidar_hokuyo/build",
+		"source" : "/home/hungubuntu/ros2_ws/src/lidar_hokuyo"
+	},
+	"version" : 
+	{
+		"major" : 2,
+		"minor" : 3
+	}
+}
