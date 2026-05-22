@@ -1,0 +1,18 @@
+{
+    "version": "2.0.0",
+    "tasks": [
+        {
+            "label": "ROS2 Build",
+            "type": "shell",
+            "command": "source /opt/ros/humble/setup.bash && colcon build --symlink-install",
+            "options": {
+                "cwd": "${workspaceFolder}",
+                "executable": "/bin/bash"
+            },
+            "group": {
+                "kind": "build",
+                "isDefault": true
+            }
+        }
+    ]
+}

@@ -5,6 +5,7 @@
 #include <QTcpSocket>
 #include <QTimer>
 #include <QDebug>
+#include <QProcess>
 #include <math.h>
 
 #include <rclcpp/rclcpp.hpp>
@@ -16,12 +17,14 @@
 #include <tf2_ros/transform_broadcaster.h>
 #include <tf2/LinearMath/Quaternion.h>
 
+#if 0
 #include <rviz_common/render_panel.hpp>
 #include <rviz_common/visualization_manager.hpp>
 #include <rviz_common/display.hpp>
 
 #include <rviz_common/ros_integration/ros_node_abstraction_iface.hpp>
 #include <rviz_common/ros_integration/ros_node_abstraction.hpp>
+#endif
 
 QT_BEGIN_NAMESPACE
 namespace Ui { class MainWindow; }
@@ -38,6 +41,9 @@ public:
 private slots:
     void connectToESP32();
     void disconnectToESP32();
+
+    void startLidar();
+    void stopLidar();
 
     void updateSpeedDisplay();
     void updateOdometry();
@@ -56,11 +62,14 @@ private:
     QTimer *odomTimer;
     QTimer *ros_timer;
 
+    QProcess *lidar_process;
+
     rclcpp::Node::SharedPtr node_;
     rclcpp::Publisher<nav_msgs::msg::Odometry>::SharedPtr odom_pub_;
     std::shared_ptr<tf2_ros::TransformBroadcaster> tf_broadcaster_;
     rclcpp::Publisher<sensor_msgs::msg::JointState>::SharedPtr joint_pub_;
 
+    #if 0 /* Rviz */
     std::shared_ptr<rviz_common::ros_integration::RosNodeAbstraction> rviz_ros_node_;
 
     rviz_common::RenderPanel *render_panel_;
@@ -69,7 +78,8 @@ private:
     rviz_common::Display *robot_model_;
     rviz_common::Display *laser_;
     rviz_common::Display *tf_;
-   
+    #endif
+
     double L = 0.25;
     double wheel_radius = 0.325;
 

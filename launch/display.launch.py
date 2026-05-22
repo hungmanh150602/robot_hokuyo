@@ -9,7 +9,7 @@ import os
 
 def generate_launch_description():
 
-    pkg_path = get_package_share_directory('lidar_hokuyo')
+    pkg_path = get_package_share_directory('robot_hokuyo')
 
     xacro_file = os.path.join(
         pkg_path,

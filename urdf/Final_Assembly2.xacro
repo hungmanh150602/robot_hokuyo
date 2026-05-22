@@ -28,7 +28,7 @@
       <origin xyz="0 0 ${ofset_z}" rpy="0 0 0" />
 
       <geometry>
-        <mesh filename="package://lidar_hokuyo/meshes/base_link.STL" />
+        <mesh filename="package://robot_hokuyo/meshes/base_link.STL" />
       </geometry>
 
       <material name="">
@@ -40,7 +40,7 @@
       <origin xyz="0 0 ${ofset_z}" rpy="0 0 0" />
 
       <geometry>
-        <mesh filename="package://lidar_hokuyo/meshes/base_link.STL" />
+        <mesh filename="package://robot_hokuyo/meshes/base_link.STL" />
       </geometry>
     </collision>
   </link>
@@ -74,7 +74,7 @@
       <origin xyz="0 0 0" rpy="0 0 0" />
 
       <geometry>
-        <mesh filename="package://lidar_hokuyo/meshes/right_wheel.STL" />
+        <mesh filename="package://robot_hokuyo/meshes/right_wheel.STL" />
       </geometry>
 
       <material name="">
@@ -85,7 +85,7 @@
     <collision>
       <origin xyz="0 0 0" rpy="0 0 0" />
       <geometry>
-        <mesh filename="package://lidar_hokuyo/meshes/right_wheel.STL" />
+        <mesh filename="package://robot_hokuyo/meshes/right_wheel.STL" />
       </geometry>
     </collision>
   </link>
@@ -120,7 +120,7 @@
       <origin xyz="0 0 0" rpy="0 0 0" />
 
       <geometry>
-        <mesh filename="package://lidar_hokuyo/meshes/left_wheel.STL" />
+        <mesh filename="package://robot_hokuyo/meshes/left_wheel.STL" />
       </geometry>
 
       <material name="">
@@ -131,7 +131,7 @@
     <collision>
       <origin xyz="0 0 0" rpy="0 0 0" />
       <geometry>
-        <mesh filename="package://lidar_hokuyo/meshes/left_wheel.STL" />
+        <mesh filename="package://robot_hokuyo/meshes/left_wheel.STL" />
       </geometry>
     </collision>
   </link>
@@ -166,7 +166,7 @@
       <origin xyz="0 0 0" rpy="0 0 0" />
 
       <geometry>
-        <mesh filename="package://lidar_hokuyo/meshes/front_caster.STL" />
+        <mesh filename="package://robot_hokuyo/meshes/front_caster.STL" />
       </geometry>
 
       <material name="">
@@ -177,7 +177,7 @@
     <collision>
       <origin xyz="0 0 0" rpy="0 0 0" />
       <geometry>
-        <mesh filename="package://lidar_hokuyo/meshes/front_caster.STL" />
+        <mesh filename="package://robot_hokuyo/meshes/front_caster.STL" />
       </geometry>
     </collision>
   </link>
@@ -212,7 +212,7 @@
       <origin xyz="0 0 0" rpy="0 0 0" />
 
       <geometry>
-        <mesh filename="package://lidar_hokuyo/meshes/back_caster.STL" />
+        <mesh filename="package://robot_hokuyo/meshes/back_caster.STL" />
       </geometry>
 
       <material name="">
@@ -223,7 +223,7 @@
     <collision>
       <origin xyz="0 0 0" rpy="0 0 0" />
       <geometry>
-        <mesh filename="package://lidar_hokuyo/meshes/back_caster.STL" />
+        <mesh filename="package://robot_hokuyo/meshes/back_caster.STL" />
       </geometry>
     </collision>
   </link>
@@ -258,7 +258,7 @@
       <origin xyz="0 0 0" rpy="0 0 0" />
 
       <geometry>
-        <mesh filename="package://lidar_hokuyo/meshes/laser_link.STL" />
+        <mesh filename="package://robot_hokuyo/meshes/laser_link.STL" />
       </geometry>
 
       <material name="">
@@ -271,7 +271,7 @@
         xyz="0 0 0"
         rpy="0 0 0" />
       <geometry>
-        <mesh filename="package://lidar_hokuyo/meshes/laser_link.STL" />
+        <mesh filename="package://robot_hokuyo/meshes/laser_link.STL" />
       </geometry>
     </collision>
   </link>

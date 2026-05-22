@@ -6,17 +6,31 @@ MainWindow::MainWindow(QWidget *parent)
 {
     ui->setupUi(this);
 
+    #if 1 /* TCP Socket */
     socket = new QTcpSocket(this);
 
     connect(ui->btnConnect, &QPushButton::clicked, this, &MainWindow::connectToESP32);
     connect(ui->btnDisConnect, &QPushButton::clicked, this, &MainWindow::disconnectToESP32);
 
-    connect(socket, &QTcpSocket::connected, this, [=]()
-            { ui->label_statustcp->setText("Connected"); });
-    connect(socket, &QTcpSocket::disconnected, this, [=]()
-            { ui->label_statustcp->setText("DisConnected"); });
+    connect(socket, &QTcpSocket::connected, this, [=](){ ui->label_statustcp->setText("Connected"); });
+    connect(socket, &QTcpSocket::disconnected, this, [=](){ ui->label_statustcp->setText("DisConnected"); });
+    #endif
 
-    // Odometry Publisher
+    #if 1 /* Connect lidar */
+    lidar_process = new QProcess(this);
+    lidar_process->setProcessChannelMode(QProcess::MergedChannels);
+
+    connect(ui->btnConnect_lidar, &QPushButton::clicked, this, &MainWindow::startLidar);
+    connect(ui->btnStop_lidar, &QPushButton::clicked, this, &MainWindow::stopLidar);
+
+    connect(lidar_process, &QProcess::readyRead, this, [=](){
+        QByteArray data = lidar_process->readAll();
+
+        ui->textEdit_log->append(QString(data));
+    });
+    #endif
+
+    #if 1 /* Odometry Publisher */
     odomTimer = new QTimer(this);
     connect(odomTimer, &QTimer::timeout, this, &MainWindow::updateOdometry);
     odomTimer->start(20); // 20 ms
@@ -25,16 +39,18 @@ MainWindow::MainWindow(QWidget *parent)
     odom_pub_ = node_->create_publisher<nav_msgs::msg::Odometry>("/odom", 10);
     tf_broadcaster_ = std::make_shared<tf2_ros::TransformBroadcaster>(node_);
     joint_pub_ = node_->create_publisher<sensor_msgs::msg::JointState>("/joint_states", 10);
+    #endif
 
-    // ros timer
+    #if 1 /* ros timer */
     ros_timer = new QTimer(this);
-    connect(ros_timer, &QTimer::timeout, this, [=]()
-            { rclcpp::spin_some(node_); });
+    connect(ros_timer, &QTimer::timeout, this, [=](){ rclcpp::spin_some(node_); });
     ros_timer->start(10); // 10 ms
+    #endif
 
-    // Rviz
+    #if 0 /* Rviz */
     render_panel_ = new rviz_common::RenderPanel(ui->rvizWidget);
     ui->rvizWidget->layout()->addWidget(render_panel_);
+
     // Create VisualizationManager
     rviz_ros_node_ = std::make_shared<
             rviz_common::ros_integration::RosNodeAbstraction>("rviz_gui_node");
@@ -49,37 +65,45 @@ MainWindow::MainWindow(QWidget *parent)
 
     manager_->initialize();
     manager_->startUpdate();
-    /*
-    // Add grid
+
+    #if 1 // Add grid
     grid_ = manager_->createDisplay(
         "rviz_default_plugins/Grid",
         "grid",
         true);
-    // Add RobotModel
+    #endif
+
+    #if 1 // Add RobotModel
     robot_model_ = manager_->createDisplay(
         "rviz_default_plugins/RobotModel",
         "robot",
         true);
 
     robot_model_->subProp("Description Topic")->setValue("/robot_description");
-    // Add TF
+    #endif
+
+    #if 1 // Add TF
     tf_ = manager_->createDisplay(
         "rviz_default_plugins/TF",
         "tf",
         true);
-    // Add LaserScan
+    #endif
+
+    #if 1 // Add LaserScan
     laser_ = manager_->createDisplay(
         "rviz_default_plugins/LaserScan",
         "scan",
         true);
 
     laser_->subProp("Topic")->setValue("/scan");
-    */
-    // Fixed Frame
-    manager_->setFixedFrame("odom");
-    // ------------------------------------------------------------- //
+    #endif
 
-    // ------------------------------------------------------------- //
+    #if 1 // Fixed Frame
+    manager_->setFixedFrame("odom");
+    #endif
+    #endif
+
+    #if 1 /* Button */
     connect(ui->Slider_Lin, &QSlider::valueChanged, this, &MainWindow::updateSpeedDisplay);
 
     connect(ui->btnForward, &QPushButton::pressed, this, &MainWindow::moveForward);
@@ -93,6 +117,7 @@ MainWindow::MainWindow(QWidget *parent)
     connect(ui->btnLeft, &QPushButton::released, this, &MainWindow::stopRobot);
     connect(ui->btnRight, &QPushButton::released, this, &MainWindow::stopRobot);
     connect(ui->btnStop, &QPushButton::released, this, &MainWindow::stopRobot);
+    #endif
 }
 
 MainWindow::~MainWindow()
@@ -123,6 +148,34 @@ void MainWindow::disconnectToESP32()
         socket->disconnectFromHost();
         ui->label_statustcp->setText("DisConnected");
     }
+}
+
+void MainWindow::startLidar()
+{
+    if (lidar_process->state() != QProcess::NotRunning)
+    {
+        ui->textEdit_log->append("LiDAR already running");
+        return;
+    }
+
+    QString program = "bash";
+    QStringList arguments;
+
+    arguments << "-c"
+              << "source ~/ros2_workspace/install/setup.bash && "
+                 "ros2 run robot_hokuyo publish_lidar";
+
+    lidar_process->start(program, arguments);
+
+    if (!lidar_process->waitForStarted())
+    {
+        ui->textEdit_log->append("Failed to start LiDAR");
+    }
+}
+
+void MainWindow::stopLidar()
+{
+    lidar_process->kill();
 }
 
 void MainWindow::updateOdometry()

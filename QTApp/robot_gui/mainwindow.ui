@@ -20,8 +20,8 @@
     </property>
     <property name="geometry">
      <rect>
-      <x>0</x>
-      <y>0</y>
+      <x>60</x>
+      <y>10</y>
       <width>340</width>
       <height>160</height>
      </rect>
@@ -112,7 +112,7 @@
       <x>10</x>
       <y>180</y>
       <width>551</width>
-      <height>451</height>
+      <height>411</height>
      </rect>
     </property>
     <property name="styleSheet">
@@ -386,7 +386,7 @@
    <widget class="QGroupBox" name="groupBox_pose">
     <property name="geometry">
      <rect>
-      <x>380</x>
+      <x>430</x>
       <y>0</y>
       <width>131</width>
       <height>145</height>
@@ -495,7 +495,7 @@
    <widget class="QWidget" name="layoutWidget">
     <property name="geometry">
      <rect>
-      <x>530</x>
+      <x>600</x>
       <y>10</y>
       <width>301</width>
       <height>50</height>
@@ -544,7 +544,7 @@
    <widget class="QWidget" name="layoutWidget">
     <property name="geometry">
      <rect>
-      <x>960</x>
+      <x>970</x>
       <y>10</y>
       <width>301</width>
       <height>62</height>
@@ -613,10 +613,10 @@
      </item>
     </layout>
    </widget>
-   <widget class="QPushButton" name="btnDisConnect_2">
+   <widget class="QPushButton" name="btnConnect_lidar">
     <property name="geometry">
      <rect>
-      <x>530</x>
+      <x>970</x>
       <y>80</y>
       <width>111</width>
       <height>41</height>
@@ -626,29 +626,13 @@
      <string>Connect Lidar</string>
     </property>
    </widget>
-   <widget class="QLabel" name="label_statustcp_2">
-    <property name="geometry">
-     <rect>
-      <x>650</x>
-      <y>80</y>
-      <width>95</width>
-      <height>41</height>
-     </rect>
-    </property>
-    <property name="text">
-     <string>DisConnected</string>
-    </property>
-    <property name="alignment">
-     <set>Qt::AlignCenter</set>
-    </property>
-   </widget>
    <widget class="QWidget" name="verticalLayoutWidget">
     <property name="geometry">
      <rect>
-      <x>600</x>
+      <x>610</x>
       <y>140</y>
       <width>661</width>
-      <height>491</height>
+      <height>531</height>
      </rect>
     </property>
     <layout class="QVBoxLayout" name="verticalLayout_5">
@@ -656,6 +640,29 @@
       <widget class="QWidget" name="rvizWidget" native="true"/>
      </item>
     </layout>
+   </widget>
+   <widget class="QPushButton" name="btnStop_lidar">
+    <property name="geometry">
+     <rect>
+      <x>1160</x>
+      <y>80</y>
+      <width>111</width>
+      <height>41</height>
+     </rect>
+    </property>
+    <property name="text">
+     <string>Stop Lidar</string>
+    </property>
+   </widget>
+   <widget class="QTextEdit" name="textEdit_log">
+    <property name="geometry">
+     <rect>
+      <x>10</x>
+      <y>590</y>
+      <width>551</width>
+      <height>81</height>
+     </rect>
+    </property>
    </widget>
   </widget>
   <widget class="QMenuBar" name="menubar">
