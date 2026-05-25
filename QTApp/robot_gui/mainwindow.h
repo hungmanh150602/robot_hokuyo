@@ -2,13 +2,24 @@
 #define MAINWINDOW_H
 
 #include <QMainWindow>
+#include <QWidget>
+#include <QUrl>
+#include <QEvent>
+#include <QPainter>
+#include <QStyleOptionViewItem>
+#include <QFileDialog>
+
 #include <QTcpSocket>
 #include <QTimer>
 #include <QDebug>
 #include <QProcess>
+#include <QApplication>
+#include <QVBoxLayout>
+
 #include <math.h>
 
 #include <rclcpp/rclcpp.hpp>
+
 #include <geometry_msgs/msg/twist.hpp>
 #include <nav_msgs/msg/odometry.hpp>
 #include <geometry_msgs/msg/transform_stamped.hpp>
@@ -17,14 +28,16 @@
 #include <tf2_ros/transform_broadcaster.h>
 #include <tf2/LinearMath/Quaternion.h>
 
-#if 0
-#include <rviz_common/render_panel.hpp>
-#include <rviz_common/visualization_manager.hpp>
-#include <rviz_common/display.hpp>
+namespace rviz_common
+{
+class RenderPanel;
+class VisualizationManager;
 
-#include <rviz_common/ros_integration/ros_node_abstraction_iface.hpp>
-#include <rviz_common/ros_integration/ros_node_abstraction.hpp>
-#endif
+namespace ros_integration
+{
+class RosNodeAbstraction;
+}
+}
 
 QT_BEGIN_NAMESPACE
 namespace Ui { class MainWindow; }
@@ -35,7 +48,7 @@ class MainWindow : public QMainWindow
     Q_OBJECT
 
 public:
-    MainWindow(QWidget *parent = nullptr);
+    explicit MainWindow(QApplication *app, QWidget *parent = nullptr);
     ~MainWindow();
 
 private slots:
@@ -44,6 +57,10 @@ private slots:
 
     void startLidar();
     void stopLidar();
+
+    void initializeRViz();
+
+    void loadRobotModel();
 
     void updateSpeedDisplay();
     void updateOdometry();
@@ -56,6 +73,7 @@ private slots:
 
 private:
     Ui::MainWindow *ui;
+    QApplication *app_;
 
     QTcpSocket *socket;
 
@@ -64,22 +82,26 @@ private:
 
     QProcess *lidar_process;
 
+    QProcess *robot_process_;
+
     rclcpp::Node::SharedPtr node_;
     rclcpp::Publisher<nav_msgs::msg::Odometry>::SharedPtr odom_pub_;
     std::shared_ptr<tf2_ros::TransformBroadcaster> tf_broadcaster_;
     rclcpp::Publisher<sensor_msgs::msg::JointState>::SharedPtr joint_pub_;
 
-    #if 0 /* Rviz */
-    std::shared_ptr<rviz_common::ros_integration::RosNodeAbstraction> rviz_ros_node_;
-
+    #if 1 /* Rviz */
     rviz_common::RenderPanel *render_panel_;
     rviz_common::VisualizationManager *manager_;
-    rviz_common::Display *grid_;
-    rviz_common::Display *robot_model_;
-    rviz_common::Display *laser_;
-    rviz_common::Display *tf_;
+
+    std::shared_ptr<rviz_common::ros_integration::RosNodeAbstraction> rviz_ros_node_;
+
+//    rviz_common::Display *grid_;
+//    rviz_common::Display *robot_model_;
+//    rviz_common::Display *laser_;
+//    rviz_common::Display *tf_;
     #endif
 
+    /* Robot parameter */
     double L = 0.25;
     double wheel_radius = 0.325;
 

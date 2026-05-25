@@ -1,8 +1,20 @@
 #include "mainwindow.h"
 #include "ui_mainwindow.h"
 
-MainWindow::MainWindow(QWidget *parent)
-    : QMainWindow(parent), ui(new Ui::MainWindow)
+#if 1 /* RViz */
+#include <rviz_common/render_panel.hpp>
+#include <rviz_common/visualization_manager.hpp>
+#include <rviz_common/view_manager.hpp>
+#include <rviz_common/display.hpp>
+
+#include <rviz_common/ros_integration/ros_node_abstraction.hpp>
+
+#include <rviz_rendering/render_window.hpp>
+#include <rviz_rendering/render_system.hpp>
+#endif
+
+MainWindow::MainWindow(QApplication *app, QWidget *parent)
+    : QMainWindow(parent), ui(new Ui::MainWindow), app_(app)
 {
     ui->setupUi(this);
 
@@ -47,60 +59,15 @@ MainWindow::MainWindow(QWidget *parent)
     ros_timer->start(10); // 10 ms
     #endif
 
-    #if 0 /* Rviz */
-    render_panel_ = new rviz_common::RenderPanel(ui->rvizWidget);
-    ui->rvizWidget->layout()->addWidget(render_panel_);
+    #if 1 /* Rviz */
 
-    // Create VisualizationManager
-    rviz_ros_node_ = std::make_shared<
-            rviz_common::ros_integration::RosNodeAbstraction>("rviz_gui_node");
-
-    manager_ = new rviz_common::VisualizationManager(
-            render_panel_,
-            rviz_ros_node_,
-            nullptr,
-            node_->get_clock());
-
-    render_panel_->initialize(manager_);
-
-    manager_->initialize();
-    manager_->startUpdate();
-
-    #if 1 // Add grid
-    grid_ = manager_->createDisplay(
-        "rviz_default_plugins/Grid",
-        "grid",
-        true);
+    initializeRViz();
     #endif
 
-    #if 1 // Add RobotModel
-    robot_model_ = manager_->createDisplay(
-        "rviz_default_plugins/RobotModel",
-        "robot",
-        true);
+    #if 1 /* Load Robot Model */
+    robot_process_ = new QProcess(this);
 
-    robot_model_->subProp("Description Topic")->setValue("/robot_description");
-    #endif
-
-    #if 1 // Add TF
-    tf_ = manager_->createDisplay(
-        "rviz_default_plugins/TF",
-        "tf",
-        true);
-    #endif
-
-    #if 1 // Add LaserScan
-    laser_ = manager_->createDisplay(
-        "rviz_default_plugins/LaserScan",
-        "scan",
-        true);
-
-    laser_->subProp("Topic")->setValue("/scan");
-    #endif
-
-    #if 1 // Fixed Frame
-    manager_->setFixedFrame("odom");
-    #endif
+    connect(ui->btn_LoadRobot, &QPushButton::clicked, this, &MainWindow::loadRobotModel);
     #endif
 
     #if 1 /* Button */
@@ -176,6 +143,146 @@ void MainWindow::startLidar()
 void MainWindow::stopLidar()
 {
     lidar_process->kill();
+}
+
+void MainWindow::initializeRViz()
+{
+    /* Initialize render system */
+    rviz_rendering::RenderSystem::get();
+    app_->processEvents();
+
+    /* Create render panel */
+    render_panel_ = new rviz_common::RenderPanel(ui->rvizWidget);
+    app_->processEvents();
+
+    /* IMPORTANT */
+    render_panel_->getRenderWindow()->initialize();
+
+    /* Create Rviz Ros Node */
+    rviz_ros_node_ = std::make_shared<rviz_common::ros_integration::RosNodeAbstraction>("rviz_gui_node");
+
+    /* Create VisualizationManager */
+    manager_ = new rviz_common::VisualizationManager(render_panel_, rviz_ros_node_, nullptr, node_->get_clock());
+
+    /* Initialize render panel */
+    render_panel_->initialize(manager_);
+    render_panel_->setMouseTracking(true);
+    render_panel_->setFocusPolicy(Qt::StrongFocus);
+    app_->processEvents();
+
+    /* Initialize manager */
+    manager_->initialize();
+
+    /* Start update */
+    manager_->startUpdate();
+
+    #if 0 /* Fixed frame */
+    manager_->setFixedFrame("odom");
+    #endif
+
+    #if 1/* Layout */
+    if(ui->rvizWidget->layout() == nullptr)
+    {
+        QVBoxLayout *layout = new QVBoxLayout(ui->rvizWidget);
+
+        layout->setContentsMargins(0,0,0,0);
+
+        layout->addWidget(render_panel_);
+    }
+    else
+    {
+        ui->rvizWidget->layout()->addWidget(render_panel_);
+    }
+    #endif
+
+    #if 1 /* Add Grid */
+    auto grid = manager_->createDisplay(
+                "rviz_default_plugins/Grid",
+                "Grid",
+                true);
+
+    Q_UNUSED(grid);
+    #endif
+
+    #if 0 /* Add TF */
+    auto tf = manager_->createDisplay(
+                "rviz_default_plugins/TF",
+                "TF",
+                true);
+
+    Q_UNUSED(tf);
+    #endif
+
+    #if 0 /* Add LaserScan */
+    auto laser = manager_->createDisplay(
+                "rviz_default_plugins/LaserScan",
+                "Laser",
+                true);
+
+    laser->subProp("Topic")->setValue("/scan");
+    #endif
+
+    #if 0 /* Orbit camera */
+    manager_->getViewManager()->setCurrentViewControllerType("rviz_default_plugins/Orbit");
+    #endif
+}
+
+void MainWindow::loadRobotModel()
+{
+    QString fileName = QFileDialog::getOpenFileName(
+            this,
+            "Select URDF/Xacro",
+            QDir::homePath(),
+            "URDF/Xacro (*.urdf *.xacro)");
+
+    if(fileName.isEmpty())
+        return;
+
+    /* Kill old robot_state_publisher */
+    if(robot_process_->state() != QProcess::NotRunning)
+    {
+        robot_process_->kill();
+        robot_process_->waitForFinished();
+    }
+
+    QString command;
+
+    /* Xacro */
+    if(fileName.endsWith(".xacro"))
+    {
+        command =
+            "source /opt/ros/humble/setup.bash && "
+            "source ~/ros2_workspace/install/setup.bash && "
+            "ros2 run robot_state_publisher "
+            "robot_state_publisher "
+            "$(ros2 pkg prefix xacro)/lib/xacro/xacro "
+            + fileName;
+    }
+    else
+    {
+        command =
+            "source /opt/ros/humble/setup.bash && "
+            "source ~/ros2_workspace/install/setup.bash && "
+            "ros2 run robot_state_publisher "
+            "robot_state_publisher "
+            + fileName;
+    }
+
+    robot_process_->start(
+        "bash",
+        QStringList() << "-c" << command);
+
+    /* Add RobotModel display */
+    auto robot_model =
+        manager_->createDisplay(
+            "rviz_default_plugins/RobotModel",
+            "Robot Model",
+            true);
+
+    Q_UNUSED(robot_model);
+
+    /* Fixed frame */
+    manager_->setFixedFrame("base_link");
 }
 
 void MainWindow::updateOdometry()

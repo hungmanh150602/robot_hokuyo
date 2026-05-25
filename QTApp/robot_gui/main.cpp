@@ -4,13 +4,21 @@
 
 int main(int argc, char *argv[])
 {
+    // Initialize ROS2
     rclcpp::init(argc, argv);
 
-    QApplication a(argc, argv);
-    MainWindow w;
+    // Initialize Qt application
+    QApplication app(argc, argv);
+
+    // Create main window
+    MainWindow w(&app);
+
     w.show();
 
-    int ret = a.exec();
+    // Run Qt event loop
+    int ret = app.exec();
+
+    // Shutdown ROS2
     rclcpp::shutdown();
 
     return ret;

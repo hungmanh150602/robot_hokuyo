@@ -10,7 +10,7 @@ find_package(ament_cmake REQUIRED)
 # uncomment the following section in order to fill in
 # further dependencies manually.
 # find_package(<dependency> REQUIRED)
-find_package(Qt5 REQUIRED COMPONENTS Widgets Network)
+find_package(Qt5 REQUIRED COMPONENTS Core Widgets Network)
 
 find_package(rclcpp REQUIRED)
 find_package(sensor_msgs REQUIRED)
@@ -20,8 +20,8 @@ find_package(tf2 REQUIRED)
 find_package(tf2_ros REQUIRED)
 
 find_package(rviz_common REQUIRED)
-find_package(rviz_default_plugins REQUIRED)
 find_package(rviz_rendering REQUIRED)
+find_package(rviz_default_plugins REQUIRED)
 find_package(rviz_ogre_vendor REQUIRED)
 
 set(CMAKE_AUTOMOC ON)
@@ -90,13 +90,14 @@ ament_target_dependencies(fake_odom
 )
 #-----------------------------------------
 
-# build mainwindow------------------------
-add_executable(mainwindow
+# build robot_gui------------------------
+add_executable(robot_gui
   QTApp/robot_gui/main.cpp
   QTApp/robot_gui/mainwindow.cpp
   QTApp/robot_gui/mainwindow.ui)
 
-target_link_libraries(mainwindow
+target_link_libraries(robot_gui
+  Qt5::Core
   Qt5::Widgets
   Qt5::Network
 
@@ -106,7 +107,7 @@ target_link_libraries(mainwindow
   rviz_ogre_vendor::OgreOverlay
 )
 
-ament_target_dependencies(mainwindow
+ament_target_dependencies(robot_gui
   rclcpp
   geometry_msgs
   nav_msgs
@@ -125,7 +126,7 @@ install(TARGETS
   publish_lidar
   tcp_client
   fake_odom
-  mainwindow
+  robot_gui
   DESTINATION lib/${PROJECT_NAME}
 )
 
