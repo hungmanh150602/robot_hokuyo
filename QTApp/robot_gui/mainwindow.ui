@@ -111,7 +111,7 @@
      <rect>
       <x>10</x>
       <y>180</y>
-      <width>551</width>
+      <width>581</width>
       <height>411</height>
      </rect>
     </property>
@@ -325,8 +325,8 @@
      <widget class="QWidget" name="layoutWidget">
       <property name="geometry">
        <rect>
-        <x>390</x>
-        <y>80</y>
+        <x>430</x>
+        <y>50</y>
         <width>144</width>
         <height>58</height>
        </rect>
@@ -384,8 +384,8 @@
      <widget class="QPushButton" name="btn_LoadRobot">
       <property name="geometry">
        <rect>
-        <x>430</x>
-        <y>10</y>
+        <x>470</x>
+        <y>0</y>
         <width>101</width>
         <height>41</height>
        </rect>
@@ -642,10 +642,10 @@
    <widget class="QWidget" name="verticalLayoutWidget">
     <property name="geometry">
      <rect>
-      <x>610</x>
-      <y>140</y>
-      <width>661</width>
-      <height>531</height>
+      <x>590</x>
+      <y>130</y>
+      <width>691</width>
+      <height>541</height>
      </rect>
     </property>
     <layout class="QVBoxLayout" name="verticalLayout_Rviz">
@@ -672,8 +672,8 @@
      <rect>
       <x>10</x>
       <y>590</y>
-      <width>551</width>
-      <height>81</height>
+      <width>581</width>
+      <height>71</height>
      </rect>
     </property>
    </widget>

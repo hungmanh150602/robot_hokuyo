@@ -35,14 +35,6 @@
         <color rgba="0.792156862745098 0.819607843137255 0.933333333333333 1" />
       </material>
     </visual>
-
-    <collision>
-      <origin xyz="0 0 ${ofset_z}" rpy="0 0 0" />
-
-      <geometry>
-        <mesh filename="package://robot_hokuyo/meshes/base_link.STL" />
-      </geometry>
-    </collision>
   </link>
 
   <joint name="base_link_joint" type="fixed">
@@ -81,13 +73,6 @@
         <color rgba="0.792156862745098 0.819607843137255 0.933333333333333 1" />
       </material>
     </visual>
-
-    <collision>
-      <origin xyz="0 0 0" rpy="0 0 0" />
-      <geometry>
-        <mesh filename="package://robot_hokuyo/meshes/right_wheel.STL" />
-      </geometry>
-    </collision>
   </link>
 
   <joint name="right_joint" type="continuous">
@@ -127,13 +112,6 @@
         <color rgba="0.792156862745098 0.819607843137255 0.933333333333333 1" />
       </material>
     </visual>
-
-    <collision>
-      <origin xyz="0 0 0" rpy="0 0 0" />
-      <geometry>
-        <mesh filename="package://robot_hokuyo/meshes/left_wheel.STL" />
-      </geometry>
-    </collision>
   </link>
 
   <joint name="left_joint" type="continuous">
@@ -173,13 +151,6 @@
         <color rgba="0.352941176470588 0.352941176470588 0.352941176470588 1" />
       </material>
     </visual>
-
-    <collision>
-      <origin xyz="0 0 0" rpy="0 0 0" />
-      <geometry>
-        <mesh filename="package://robot_hokuyo/meshes/front_caster.STL" />
-      </geometry>
-    </collision>
   </link>
 
   <joint name="front_joint" type="fixed">
@@ -219,13 +190,6 @@
         <color rgba="0.352941176470588 0.352941176470588 0.352941176470588 1" />
       </material>
     </visual>
-
-    <collision>
-      <origin xyz="0 0 0" rpy="0 0 0" />
-      <geometry>
-        <mesh filename="package://robot_hokuyo/meshes/back_caster.STL" />
-      </geometry>
-    </collision>
   </link>
 
   <joint name="back_joint" type="fixed">
@@ -265,15 +229,6 @@
         <color rgba="0.701960784313725 0.552941176470588 0.00392156862745098 1" />
       </material>
     </visual>
-
-    <collision>
-      <origin
-        xyz="0 0 0"
-        rpy="0 0 0" />
-      <geometry>
-        <mesh filename="package://robot_hokuyo/meshes/laser_link.STL" />
-      </geometry>
-    </collision>
   </link>
 
   <joint name="lidar_joint" type="fixed">

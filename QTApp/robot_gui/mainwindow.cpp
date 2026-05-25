@@ -60,7 +60,6 @@ MainWindow::MainWindow(QApplication *app, QWidget *parent)
     #endif
 
     #if 1 /* Rviz */
-
     initializeRViz();
     #endif
 
@@ -273,16 +272,26 @@ void MainWindow::loadRobotModel()
         QStringList() << "-c" << command);
 
     /* Add RobotModel display */
-    auto robot_model =
-        manager_->createDisplay(
+    auto robot_model = manager_->createDisplay(
             "rviz_default_plugins/RobotModel",
             "Robot Model",
             true);
+
+    robot_model->subProp("Description Source")->setValue("Topic");
+    robot_model->subProp("Description Topic")->setValue("/robot_description");
 
     Q_UNUSED(robot_model);
 
     /* Fixed frame */
     manager_->setFixedFrame("base_link");
+
+    /* Add TF display */
+    auto tf = manager_->createDisplay(
+            "rviz_default_plugins/TF",
+            "TF",
+            true);
+
+    Q_UNUSED(tf);
 }
 
 void MainWindow::updateOdometry()
