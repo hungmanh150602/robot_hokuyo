@@ -60,6 +60,16 @@ private slots:
 
     void initializeRViz();
 
+    void rviz_zoomIn();
+    void rviz_zoomOut();
+    void rviz_rotateLeft();
+    void rviz_rotateRight();
+    void rviz_rotateUp();
+    void rviz_rotateDown();
+    void rviz_resetView();
+
+    void SlamToolBox();
+
     void loadRobotModel();
 
     void updateSpeedDisplay();
@@ -81,8 +91,8 @@ private:
     QTimer *ros_timer;
 
     QProcess *lidar_process;
-
     QProcess *robot_process_;
+    QProcess *slam_process_;
 
     rclcpp::Node::SharedPtr node_;
     rclcpp::Publisher<nav_msgs::msg::Odometry>::SharedPtr odom_pub_;

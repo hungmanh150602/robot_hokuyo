@@ -5,6 +5,7 @@
 #include <rviz_common/render_panel.hpp>
 #include <rviz_common/visualization_manager.hpp>
 #include <rviz_common/view_manager.hpp>
+#include <rviz_common/view_controller.hpp>
 #include <rviz_common/display.hpp>
 
 #include <rviz_common/ros_integration/ros_node_abstraction.hpp>
@@ -42,7 +43,7 @@ MainWindow::MainWindow(QApplication *app, QWidget *parent)
     });
     #endif
 
-    #if 1 /* Odometry Publisher */
+    #if 1 /* Odometry,TF Publisher */
     odomTimer = new QTimer(this);
     connect(odomTimer, &QTimer::timeout, this, &MainWindow::updateOdometry);
     odomTimer->start(20); // 20 ms
@@ -61,6 +62,15 @@ MainWindow::MainWindow(QApplication *app, QWidget *parent)
 
     #if 1 /* Rviz */
     initializeRViz();
+
+    /* btn rviz */
+    connect(ui->btnRvizZoomIn, &QPushButton::clicked, this, &MainWindow::rviz_zoomIn);
+    connect(ui->btnRvizZoomOut, &QPushButton::clicked, this, &MainWindow::rviz_zoomOut);
+    connect(ui->btnRvizLeft, &QPushButton::clicked, this, &MainWindow::rviz_rotateLeft);
+    connect(ui->btnRvizRight, &QPushButton::clicked, this, &MainWindow::rviz_rotateRight);
+    connect(ui->btnRvizUp, &QPushButton::clicked, this, &MainWindow::rviz_rotateUp);
+    connect(ui->btnRvizDown, &QPushButton::clicked, this, &MainWindow::rviz_rotateDown);
+    connect(ui->btnRvizReset, &QPushButton::clicked, this, &MainWindow::rviz_resetView);
     #endif
 
     #if 1 /* Load Robot Model */
@@ -69,9 +79,16 @@ MainWindow::MainWindow(QApplication *app, QWidget *parent)
     connect(ui->btn_LoadRobot, &QPushButton::clicked, this, &MainWindow::loadRobotModel);
     #endif
 
+    #if 1 /* Slam Tool Box */
+    slam_process_ = new QProcess(this);
+    connect(ui->btn_SlamToolBox, &QPushButton::clicked, this, &MainWindow::SlamToolBox);
+    #endif
+
     #if 1 /* Button */
+    /* slider */
     connect(ui->Slider_Lin, &QSlider::valueChanged, this, &MainWindow::updateSpeedDisplay);
 
+    /* btn control robot */
     connect(ui->btnForward, &QPushButton::pressed, this, &MainWindow::moveForward);
     connect(ui->btnBack, &QPushButton::pressed, this, &MainWindow::moveBack);
     connect(ui->btnLeft, &QPushButton::pressed, this, &MainWindow::moveLeft);
@@ -93,6 +110,8 @@ MainWindow::~MainWindow()
 
 void MainWindow::connectToESP32()
 {
+    ui->textEdit_log->append("Connecting to ESP32 ...");
+
     QString ip = ui->lineEdit_ip->text();
     int port = ui->lineEdit_port->text().toInt();
 
@@ -100,10 +119,12 @@ void MainWindow::connectToESP32()
     if (socket->waitForConnected(3000))
     {
         ui->label_statustcp->setText("Connected");
+        ui->textEdit_log->append("Connected to ESP32.");
     }
     else
     {
         ui->label_statustcp->setText("Disconnected");
+        ui->textEdit_log->append("Disconnected to ESP32.");
     }
 }
 
@@ -165,8 +186,6 @@ void MainWindow::initializeRViz()
 
     /* Initialize render panel */
     render_panel_->initialize(manager_);
-    render_panel_->setMouseTracking(true);
-    render_panel_->setFocusPolicy(Qt::StrongFocus);
     app_->processEvents();
 
     /* Initialize manager */
@@ -174,10 +193,6 @@ void MainWindow::initializeRViz()
 
     /* Start update */
     manager_->startUpdate();
-
-    #if 0 /* Fixed frame */
-    manager_->setFixedFrame("odom");
-    #endif
 
     #if 1/* Layout */
     if(ui->rvizWidget->layout() == nullptr)
@@ -203,6 +218,10 @@ void MainWindow::initializeRViz()
     Q_UNUSED(grid);
     #endif
 
+    #if 0 /* Fixed frame */
+    manager_->setFixedFrame("odom");
+    #endif
+
     #if 0 /* Add TF */
     auto tf = manager_->createDisplay(
                 "rviz_default_plugins/TF",
@@ -221,21 +240,36 @@ void MainWindow::initializeRViz()
     laser->subProp("Topic")->setValue("/scan");
     #endif
 
-    #if 0 /* Orbit camera */
-    manager_->getViewManager()->setCurrentViewControllerType("rviz_default_plugins/Orbit");
+    #if 0 /* map */
+    auto map = manager_->createDisplay(
+            "rviz_default_plugins/Map",
+            "Map",
+            true);
+
+    map->subProp("Topic")->setValue("/map");
+    #endif
+
+    #if 0 /* trajectory */
+    auto pose =
+        manager_->createDisplay(
+            "rviz_default_plugins/Pose",
+            "Pose",
+            true);
     #endif
 }
 
 void MainWindow::loadRobotModel()
 {
-    QString fileName = QFileDialog::getOpenFileName(
-            this,
-            "Select URDF/Xacro",
-            QDir::homePath(),
-            "URDF/Xacro (*.urdf *.xacro)");
+    QString fileName = "/home/hungubuntu/ros2_workspace/src/"
+                       "robot_hokuyo/urdf/Final_Assembly2.xacro";
+
 
     if(fileName.isEmpty())
+    {
+        ui->textEdit_log->append("No such file found!");
         return;
+    }
+    ui->textEdit_log->append("Robot Model Loaded!");
 
     /* Kill old robot_state_publisher */
     if(robot_process_->state() != QProcess::NotRunning)
@@ -245,45 +279,37 @@ void MainWindow::loadRobotModel()
     }
 
     QString command;
+    QString urdfFile = "/tmp/robot.urdf";
 
-    /* Xacro */
-    if(fileName.endsWith(".xacro"))
-    {
-        command =
+    #if 1 /* Xacro */
+    command =
             "source /opt/ros/humble/setup.bash && "
             "source ~/ros2_workspace/install/setup.bash && "
+            "xacro " + fileName + " > " + urdfFile + " && "
             "ros2 run robot_state_publisher "
             "robot_state_publisher "
-            "$(ros2 pkg prefix xacro)/lib/xacro/xacro "
-            + fileName;
-    }
-    else
-    {
-        command =
+            + urdfFile;
+    #else /* urdf */
+    command =
             "source /opt/ros/humble/setup.bash && "
             "source ~/ros2_workspace/install/setup.bash && "
             "ros2 run robot_state_publisher "
             "robot_state_publisher "
             + fileName;
-    }
+    #endif
 
-    robot_process_->start(
-        "bash",
-        QStringList() << "-c" << command);
+    robot_process_->start("bash", QStringList() << "-c" << command);
 
     /* Add RobotModel display */
     auto robot_model = manager_->createDisplay(
-            "rviz_default_plugins/RobotModel",
-            "Robot Model",
-            true);
+                "rviz_default_plugins/RobotModel",
+                "Robot Model",
+                true);
 
     robot_model->subProp("Description Source")->setValue("Topic");
     robot_model->subProp("Description Topic")->setValue("/robot_description");
 
     Q_UNUSED(robot_model);
-
-    /* Fixed frame */
-    manager_->setFixedFrame("base_link");
 
     /* Add TF display */
     auto tf = manager_->createDisplay(
@@ -292,6 +318,9 @@ void MainWindow::loadRobotModel()
             true);
 
     Q_UNUSED(tf);
+
+    /* Fixed frame */
+    manager_->setFixedFrame("odom");
 }
 
 void MainWindow::updateOdometry()
@@ -369,6 +398,142 @@ void MainWindow::updateSpeedDisplay()
     int Lin_vel = ui->Slider_Lin->value();
 
     ui->lineEdit_Lin->setText(QString::number(Lin_vel));
+}
+
+void MainWindow::rviz_zoomIn()
+{
+    auto view = manager_->getViewManager()->getCurrent();
+
+    if(view)
+    {
+        float dist =view->subProp("Distance")->getValue().toFloat();
+
+        dist += 1.0;
+
+        if(dist < 0.5)
+            dist = 0.5;
+
+        view->subProp("Distance")->setValue(dist);
+    }
+}
+
+void MainWindow::rviz_zoomOut()
+{
+    auto view = manager_->getViewManager()->getCurrent();
+
+    if(view)
+    {
+        float dist = view->subProp("Distance")->getValue().toFloat();
+
+        dist -= 1.0;
+
+        view->subProp("Distance")->setValue(dist);
+    }
+}
+
+void MainWindow::rviz_rotateLeft()
+{
+    auto view = manager_->getViewManager()->getCurrent();
+
+    if(view)
+    {
+        float yaw = view->subProp("Yaw")->getValue().toFloat();
+
+        yaw += 0.1;
+
+        view->subProp("Yaw")->setValue(yaw);
+    }
+}
+
+void MainWindow::rviz_rotateRight()
+{
+    auto view = manager_->getViewManager()->getCurrent();
+
+    if(view)
+    {
+        float yaw = view->subProp("Yaw")->getValue().toFloat();
+
+        yaw -= 0.1;
+
+        view->subProp("Yaw")->setValue(yaw);
+    }
+}
+
+void MainWindow::rviz_rotateUp()
+{
+    auto view = manager_->getViewManager()->getCurrent();
+
+    if(view)
+    {
+        float pitch = view->subProp("Pitch")->getValue().toFloat();
+
+        pitch -= 0.1;
+
+        view->subProp("Pitch")->setValue(pitch);
+    }
+}
+
+void MainWindow::rviz_rotateDown()
+{
+    auto view = manager_->getViewManager()->getCurrent();
+
+    if(view)
+    {
+        float pitch = view->subProp("Pitch")->getValue().toFloat();
+
+        pitch += 0.1;
+
+        view->subProp("Pitch")->setValue(pitch);
+    }}
+
+void MainWindow::rviz_resetView()
+{
+    auto view = manager_->getViewManager()->getCurrent();
+
+    if(!view)
+        return;
+
+    /* Reset camera distance */
+    view->subProp("Distance")->setValue(10.0);
+
+    /* Reset yaw */
+    view->subProp("Yaw")->setValue(0.0);
+
+    /* Reset pitch */
+    view->subProp("Pitch")->setValue(0.785);
+
+    /* Reset focal point */
+    view->subProp("Focal Point")->setValue("0; 0; 0");
+
+    /* Force update */
+    manager_->queueRender();
+}
+
+void MainWindow::SlamToolBox()
+{
+    /* Already running */
+    if(slam_process_->state() != QProcess::NotRunning)
+    {
+        ui->textEdit_log->append("SLAM already running");
+        return;
+    }
+
+    QString program = "bash";
+    QStringList arguments;
+
+    arguments << "-c"
+              << "source /opt/ros/humble/setup.bash && "
+                 "source ~/ros2_workspace/install/setup.bash && "
+                 "ros2 launch slam_toolbox online_async_launch.py";
+
+    slam_process_->start(program, arguments);
+
+    if(!slam_process_->waitForStarted())
+    {
+        ui->textEdit_log->append("Failed to start SLAM");
+        return;
+    }
+    ui->textEdit_log->append("SLAM started");
 }
 
 void MainWindow::moveForward()
