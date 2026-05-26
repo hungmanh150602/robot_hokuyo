@@ -11,14 +11,10 @@
 
 #include <QTcpSocket>
 #include <QTimer>
-#include <QDebug>
-#include <QProcess>
-#include <QApplication>
 #include <QVBoxLayout>
+#include <QApplication>
 
 #include <math.h>
-
-#include <rclcpp/rclcpp.hpp>
 
 #include <geometry_msgs/msg/twist.hpp>
 #include <nav_msgs/msg/odometry.hpp>
@@ -28,16 +24,11 @@
 #include <tf2_ros/transform_broadcaster.h>
 #include <tf2/LinearMath/Quaternion.h>
 
-namespace rviz_common
-{
-class RenderPanel;
-class VisualizationManager;
+#include "lidar/lidar_manager.h"
+#include "rviz/rviz_manager.h"
+#include "slam/slam_manager.h"
 
-namespace ros_integration
-{
-class RosNodeAbstraction;
-}
-}
+
 
 QT_BEGIN_NAMESPACE
 namespace Ui { class MainWindow; }
@@ -55,25 +46,13 @@ private slots:
     void connectToESP32();
     void disconnectToESP32();
 
-    void startLidar();
-    void stopLidar();
-
-    void initializeRViz();
-
-    void rviz_zoomIn();
-    void rviz_zoomOut();
-    void rviz_rotateLeft();
-    void rviz_rotateRight();
-    void rviz_rotateUp();
-    void rviz_rotateDown();
-    void rviz_resetView();
-
-    void SlamToolBox();
-
-    void loadRobotModel();
-
     void updateSpeedDisplay();
     void updateOdometry();
+
+    void updateFrameList();
+    void updateLaserTopics();
+    void updateMapTopics();
+    void loadRobot();
 
     void moveForward();
     void moveBack();
@@ -85,31 +64,21 @@ private:
     Ui::MainWindow *ui;
     QApplication *app_;
 
+    QProcess *process_;
+
     QTcpSocket *socket;
 
     QTimer *odomTimer;
     QTimer *ros_timer;
 
-    QProcess *lidar_process;
-    QProcess *robot_process_;
-    QProcess *slam_process_;
+    LidarManager *lidar;
+    RVizManager *rviz;
+    SlamManager *slam;
 
     rclcpp::Node::SharedPtr node_;
     rclcpp::Publisher<nav_msgs::msg::Odometry>::SharedPtr odom_pub_;
     std::shared_ptr<tf2_ros::TransformBroadcaster> tf_broadcaster_;
     rclcpp::Publisher<sensor_msgs::msg::JointState>::SharedPtr joint_pub_;
-
-    #if 1 /* Rviz */
-    rviz_common::RenderPanel *render_panel_;
-    rviz_common::VisualizationManager *manager_;
-
-    std::shared_ptr<rviz_common::ros_integration::RosNodeAbstraction> rviz_ros_node_;
-
-//    rviz_common::Display *grid_;
-//    rviz_common::Display *robot_model_;
-//    rviz_common::Display *laser_;
-//    rviz_common::Display *tf_;
-    #endif
 
     /* Robot parameter */
     double L = 0.25;

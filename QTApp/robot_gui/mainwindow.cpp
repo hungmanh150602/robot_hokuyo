@@ -1,25 +1,22 @@
 #include "mainwindow.h"
 #include "ui_mainwindow.h"
 
-#if 1 /* RViz */
-#include <rviz_common/render_panel.hpp>
-#include <rviz_common/visualization_manager.hpp>
-#include <rviz_common/view_manager.hpp>
-#include <rviz_common/view_controller.hpp>
-#include <rviz_common/display.hpp>
-
-#include <rviz_common/ros_integration/ros_node_abstraction.hpp>
-
-#include <rviz_rendering/render_window.hpp>
-#include <rviz_rendering/render_system.hpp>
-#endif
-
 MainWindow::MainWindow(QApplication *app, QWidget *parent)
     : QMainWindow(parent), ui(new Ui::MainWindow), app_(app)
 {
     ui->setupUi(this);
 
-    #if 1 /* TCP Socket */
+    process_ = new QProcess(this);
+    process_->setProcessChannelMode(QProcess::MergedChannels);
+    connect(process_, &QProcess::readyRead, this, [=]()
+    {
+        QByteArray data = process_->readAll();
+
+        ui->textEdit_log->append(QString::fromLocal8Bit(data));
+    });
+
+    /* ================================= TCP Socket ================================= */
+    #if 1
     socket = new QTcpSocket(this);
 
     connect(ui->btnConnect, &QPushButton::clicked, this, &MainWindow::connectToESP32);
@@ -29,21 +26,22 @@ MainWindow::MainWindow(QApplication *app, QWidget *parent)
     connect(socket, &QTcpSocket::disconnected, this, [=](){ ui->label_statustcp->setText("DisConnected"); });
     #endif
 
-    #if 1 /* Connect lidar */
-    lidar_process = new QProcess(this);
-    lidar_process->setProcessChannelMode(QProcess::MergedChannels);
+    /* ================================= Connect lidar ================================= */
+    #if 1
+    lidar = new LidarManager(this);
 
-    connect(ui->btnConnect_lidar, &QPushButton::clicked, this, &MainWindow::startLidar);
-    connect(ui->btnStop_lidar, &QPushButton::clicked, this, &MainWindow::stopLidar);
-
-    connect(lidar_process, &QProcess::readyRead, this, [=](){
-        QByteArray data = lidar_process->readAll();
-
-        ui->textEdit_log->append(QString(data));
+    connect(lidar, &LidarManager::newLog, this, [=](QString text)
+    {
+        ui->textEdit_log->append(text);
     });
+
+    // button
+    connect(ui->btnConnect_lidar, &QPushButton::clicked, lidar, &LidarManager::startLidar);
+    connect(ui->btnStop_lidar, &QPushButton::clicked, lidar, &LidarManager::stop);
     #endif
 
-    #if 1 /* Odometry,TF Publisher */
+    /* ================================= Odometry,TF Publisher ================================= */
+    #if 1
     odomTimer = new QTimer(this);
     connect(odomTimer, &QTimer::timeout, this, &MainWindow::updateOdometry);
     odomTimer->start(20); // 20 ms
@@ -54,37 +52,57 @@ MainWindow::MainWindow(QApplication *app, QWidget *parent)
     joint_pub_ = node_->create_publisher<sensor_msgs::msg::JointState>("/joint_states", 10);
     #endif
 
-    #if 1 /* ros timer */
+    /* ================================= ros timer ================================= */
+    #if 1
     ros_timer = new QTimer(this);
     connect(ros_timer, &QTimer::timeout, this, [=](){ rclcpp::spin_some(node_); });
     ros_timer->start(10); // 10 ms
     #endif
 
-    #if 1 /* Rviz */
-    initializeRViz();
+    /* ================================= Rviz ================================= */
+    #if 1
+    rviz = new RVizManager(app_, ui->rvizWidget, node_, this);
 
-    /* btn rviz */
-    connect(ui->btnRvizZoomIn, &QPushButton::clicked, this, &MainWindow::rviz_zoomIn);
-    connect(ui->btnRvizZoomOut, &QPushButton::clicked, this, &MainWindow::rviz_zoomOut);
-    connect(ui->btnRvizLeft, &QPushButton::clicked, this, &MainWindow::rviz_rotateLeft);
-    connect(ui->btnRvizRight, &QPushButton::clicked, this, &MainWindow::rviz_rotateRight);
-    connect(ui->btnRvizUp, &QPushButton::clicked, this, &MainWindow::rviz_rotateUp);
-    connect(ui->btnRvizDown, &QPushButton::clicked, this, &MainWindow::rviz_rotateDown);
-    connect(ui->btnRvizReset, &QPushButton::clicked, this, &MainWindow::rviz_resetView);
-    #endif
+    rviz->initializeRViz();
 
-    #if 1 /* Load Robot Model */
-    robot_process_ = new QProcess(this);
+    // button rviz
+    connect(ui->btnRvizZoomIn, &QPushButton::clicked, rviz, &RVizManager::zoomIn);
+    connect(ui->btnRvizZoomOut, &QPushButton::clicked, rviz, &RVizManager::zoomOut);
+    connect(ui->btnRvizLeft, &QPushButton::clicked, rviz, &RVizManager::rotateLeft);
+    connect(ui->btnRvizRight, &QPushButton::clicked, rviz, &RVizManager::rotateRight);
+    connect(ui->btnRvizUp, &QPushButton::clicked, rviz, &RVizManager::rotateUp);
+    connect(ui->btnRvizDown, &QPushButton::clicked, rviz, &RVizManager::rotateDown);
+    connect(ui->btnRvizReset, &QPushButton::clicked, rviz, &RVizManager::resetView);
 
-    connect(ui->btn_LoadRobot, &QPushButton::clicked, this, &MainWindow::loadRobotModel);
+    // Load Robot Model
+    connect(ui->btn_LoadRobot, &QPushButton::clicked, this, &MainWindow::loadRobot);
+    // TF
+    connect(ui->checkBox_TF, &QCheckBox::toggled, rviz, &RVizManager::enableTF);
+    // Frame
+    connect(ui->comboBox_FixFrame, &QComboBox::currentTextChanged, rviz, &RVizManager::setFixedFrame);
+    // Laser
+    connect(ui->btn_LaserScan, &QPushButton::clicked, this, &MainWindow::updateLaserTopics);
+    connect(ui->comboBox_Laser, &QComboBox::currentTextChanged, rviz, &RVizManager::setLaserTopic);
+    // Map
+    connect(ui->btn_Maps, &QPushButton::clicked, this, &MainWindow::updateMapTopics);
+    connect(ui->comboBox_Maps, &QComboBox::currentTextChanged, rviz, &RVizManager::setMapTopic);
     #endif
 
     #if 1 /* Slam Tool Box */
-    slam_process_ = new QProcess(this);
-    connect(ui->btn_SlamToolBox, &QPushButton::clicked, this, &MainWindow::SlamToolBox);
+    slam = new SlamManager(this);
+
+    connect(slam, &SlamManager::newLog, this, [=](QString text)
+    {
+        ui->textEdit_log->append(text);
+    });
+
+    // button
+    connect(ui->btn_SlamToolBox, &QPushButton::clicked, slam, &SlamManager::SlamToolBox);
+    connect(ui->btn_StopSlam, &QPushButton::clicked, slam, &SlamManager::stop);
     #endif
 
-    #if 1 /* Button */
+    /* ================================= Button ================================= */
+    #if 1
     /* slider */
     connect(ui->Slider_Lin, &QSlider::valueChanged, this, &MainWindow::updateSpeedDisplay);
 
@@ -105,6 +123,28 @@ MainWindow::MainWindow(QApplication *app, QWidget *parent)
 
 MainWindow::~MainWindow()
 {
+    if(slam)
+    {
+        slam->stop();
+    }
+
+    if(lidar)
+    {
+        lidar->stop();
+    }
+
+    if(rviz)
+    {
+        rviz->stop();
+    }
+
+    if(socket)
+    {
+        socket->disconnectFromHost();
+    }
+
+    rclcpp::shutdown();
+
     delete ui;
 }
 
@@ -135,192 +175,6 @@ void MainWindow::disconnectToESP32()
         socket->disconnectFromHost();
         ui->label_statustcp->setText("DisConnected");
     }
-}
-
-void MainWindow::startLidar()
-{
-    if (lidar_process->state() != QProcess::NotRunning)
-    {
-        ui->textEdit_log->append("LiDAR already running");
-        return;
-    }
-
-    QString program = "bash";
-    QStringList arguments;
-
-    arguments << "-c"
-              << "source ~/ros2_workspace/install/setup.bash && "
-                 "ros2 run robot_hokuyo publish_lidar";
-
-    lidar_process->start(program, arguments);
-
-    if (!lidar_process->waitForStarted())
-    {
-        ui->textEdit_log->append("Failed to start LiDAR");
-    }
-}
-
-void MainWindow::stopLidar()
-{
-    lidar_process->kill();
-}
-
-void MainWindow::initializeRViz()
-{
-    /* Initialize render system */
-    rviz_rendering::RenderSystem::get();
-    app_->processEvents();
-
-    /* Create render panel */
-    render_panel_ = new rviz_common::RenderPanel(ui->rvizWidget);
-    app_->processEvents();
-
-    /* IMPORTANT */
-    render_panel_->getRenderWindow()->initialize();
-
-    /* Create Rviz Ros Node */
-    rviz_ros_node_ = std::make_shared<rviz_common::ros_integration::RosNodeAbstraction>("rviz_gui_node");
-
-    /* Create VisualizationManager */
-    manager_ = new rviz_common::VisualizationManager(render_panel_, rviz_ros_node_, nullptr, node_->get_clock());
-
-    /* Initialize render panel */
-    render_panel_->initialize(manager_);
-    app_->processEvents();
-
-    /* Initialize manager */
-    manager_->initialize();
-
-    /* Start update */
-    manager_->startUpdate();
-
-    #if 1/* Layout */
-    if(ui->rvizWidget->layout() == nullptr)
-    {
-        QVBoxLayout *layout = new QVBoxLayout(ui->rvizWidget);
-
-        layout->setContentsMargins(0,0,0,0);
-
-        layout->addWidget(render_panel_);
-    }
-    else
-    {
-        ui->rvizWidget->layout()->addWidget(render_panel_);
-    }
-    #endif
-
-    #if 1 /* Add Grid */
-    auto grid = manager_->createDisplay(
-                "rviz_default_plugins/Grid",
-                "Grid",
-                true);
-
-    Q_UNUSED(grid);
-    #endif
-
-    #if 0 /* Fixed frame */
-    manager_->setFixedFrame("odom");
-    #endif
-
-    #if 0 /* Add TF */
-    auto tf = manager_->createDisplay(
-                "rviz_default_plugins/TF",
-                "TF",
-                true);
-
-    Q_UNUSED(tf);
-    #endif
-
-    #if 0 /* Add LaserScan */
-    auto laser = manager_->createDisplay(
-                "rviz_default_plugins/LaserScan",
-                "Laser",
-                true);
-
-    laser->subProp("Topic")->setValue("/scan");
-    #endif
-
-    #if 0 /* map */
-    auto map = manager_->createDisplay(
-            "rviz_default_plugins/Map",
-            "Map",
-            true);
-
-    map->subProp("Topic")->setValue("/map");
-    #endif
-
-    #if 0 /* trajectory */
-    auto pose =
-        manager_->createDisplay(
-            "rviz_default_plugins/Pose",
-            "Pose",
-            true);
-    #endif
-}
-
-void MainWindow::loadRobotModel()
-{
-    QString fileName = "/home/hungubuntu/ros2_workspace/src/"
-                       "robot_hokuyo/urdf/Final_Assembly2.xacro";
-
-
-    if(fileName.isEmpty())
-    {
-        ui->textEdit_log->append("No such file found!");
-        return;
-    }
-    ui->textEdit_log->append("Robot Model Loaded!");
-
-    /* Kill old robot_state_publisher */
-    if(robot_process_->state() != QProcess::NotRunning)
-    {
-        robot_process_->kill();
-        robot_process_->waitForFinished();
-    }
-
-    QString command;
-    QString urdfFile = "/tmp/robot.urdf";
-
-    #if 1 /* Xacro */
-    command =
-            "source /opt/ros/humble/setup.bash && "
-            "source ~/ros2_workspace/install/setup.bash && "
-            "xacro " + fileName + " > " + urdfFile + " && "
-            "ros2 run robot_state_publisher "
-            "robot_state_publisher "
-            + urdfFile;
-    #else /* urdf */
-    command =
-            "source /opt/ros/humble/setup.bash && "
-            "source ~/ros2_workspace/install/setup.bash && "
-            "ros2 run robot_state_publisher "
-            "robot_state_publisher "
-            + fileName;
-    #endif
-
-    robot_process_->start("bash", QStringList() << "-c" << command);
-
-    /* Add RobotModel display */
-    auto robot_model = manager_->createDisplay(
-                "rviz_default_plugins/RobotModel",
-                "Robot Model",
-                true);
-
-    robot_model->subProp("Description Source")->setValue("Topic");
-    robot_model->subProp("Description Topic")->setValue("/robot_description");
-
-    Q_UNUSED(robot_model);
-
-    /* Add TF display */
-    auto tf = manager_->createDisplay(
-            "rviz_default_plugins/TF",
-            "TF",
-            true);
-
-    Q_UNUSED(tf);
-
-    /* Fixed frame */
-    manager_->setFixedFrame("odom");
 }
 
 void MainWindow::updateOdometry()
@@ -400,140 +254,41 @@ void MainWindow::updateSpeedDisplay()
     ui->lineEdit_Lin->setText(QString::number(Lin_vel));
 }
 
-void MainWindow::rviz_zoomIn()
+void MainWindow::updateFrameList()
 {
-    auto view = manager_->getViewManager()->getCurrent();
+    QStringList list_frames = rviz->getAllFrames();
 
-    if(view)
-    {
-        float dist =view->subProp("Distance")->getValue().toFloat();
-
-        dist += 1.0;
-
-        if(dist < 0.5)
-            dist = 0.5;
-
-        view->subProp("Distance")->setValue(dist);
-    }
+    ui->comboBox_FixFrame->clear();
+    ui->comboBox_FixFrame->addItems(list_frames);
 }
 
-void MainWindow::rviz_zoomOut()
+void MainWindow::updateLaserTopics()
 {
-    auto view = manager_->getViewManager()->getCurrent();
+    QStringList topics = rviz->getLaserTopics();
 
-    if(view)
-    {
-        float dist = view->subProp("Distance")->getValue().toFloat();
-
-        dist -= 1.0;
-
-        view->subProp("Distance")->setValue(dist);
-    }
+    ui->comboBox_Laser->clear();
+    ui->comboBox_Laser->addItems(topics);
 }
 
-void MainWindow::rviz_rotateLeft()
+void MainWindow::updateMapTopics()
 {
-    auto view = manager_->getViewManager()->getCurrent();
+    QStringList topics = rviz->getMapTopics();
 
-    if(view)
-    {
-        float yaw = view->subProp("Yaw")->getValue().toFloat();
-
-        yaw += 0.1;
-
-        view->subProp("Yaw")->setValue(yaw);
-    }
+    ui->comboBox_Maps->clear();
+    ui->comboBox_Maps->addItems(topics);
 }
 
-void MainWindow::rviz_rotateRight()
+void MainWindow::loadRobot()
 {
-    auto view = manager_->getViewManager()->getCurrent();
+    rviz->loadRobotModel();
 
-    if(view)
+    QTimer::singleShot(
+        3000,
+        this,
+        [=]()
     {
-        float yaw = view->subProp("Yaw")->getValue().toFloat();
-
-        yaw -= 0.1;
-
-        view->subProp("Yaw")->setValue(yaw);
-    }
-}
-
-void MainWindow::rviz_rotateUp()
-{
-    auto view = manager_->getViewManager()->getCurrent();
-
-    if(view)
-    {
-        float pitch = view->subProp("Pitch")->getValue().toFloat();
-
-        pitch -= 0.1;
-
-        view->subProp("Pitch")->setValue(pitch);
-    }
-}
-
-void MainWindow::rviz_rotateDown()
-{
-    auto view = manager_->getViewManager()->getCurrent();
-
-    if(view)
-    {
-        float pitch = view->subProp("Pitch")->getValue().toFloat();
-
-        pitch += 0.1;
-
-        view->subProp("Pitch")->setValue(pitch);
-    }}
-
-void MainWindow::rviz_resetView()
-{
-    auto view = manager_->getViewManager()->getCurrent();
-
-    if(!view)
-        return;
-
-    /* Reset camera distance */
-    view->subProp("Distance")->setValue(10.0);
-
-    /* Reset yaw */
-    view->subProp("Yaw")->setValue(0.0);
-
-    /* Reset pitch */
-    view->subProp("Pitch")->setValue(0.785);
-
-    /* Reset focal point */
-    view->subProp("Focal Point")->setValue("0; 0; 0");
-
-    /* Force update */
-    manager_->queueRender();
-}
-
-void MainWindow::SlamToolBox()
-{
-    /* Already running */
-    if(slam_process_->state() != QProcess::NotRunning)
-    {
-        ui->textEdit_log->append("SLAM already running");
-        return;
-    }
-
-    QString program = "bash";
-    QStringList arguments;
-
-    arguments << "-c"
-              << "source /opt/ros/humble/setup.bash && "
-                 "source ~/ros2_workspace/install/setup.bash && "
-                 "ros2 launch slam_toolbox online_async_launch.py";
-
-    slam_process_->start(program, arguments);
-
-    if(!slam_process_->waitForStarted())
-    {
-        ui->textEdit_log->append("Failed to start SLAM");
-        return;
-    }
-    ui->textEdit_log->append("SLAM started");
+        updateFrameList();
+    });
 }
 
 void MainWindow::moveForward()

@@ -109,9 +109,9 @@
    <widget class="QTabWidget" name="tabWidget">
     <property name="geometry">
      <rect>
-      <x>10</x>
+      <x>0</x>
       <y>180</y>
-      <width>581</width>
+      <width>591</width>
       <height>411</height>
      </rect>
     </property>
@@ -119,7 +119,7 @@
      <string notr="true"/>
     </property>
     <property name="currentIndex">
-     <number>1</number>
+     <number>4</number>
     </property>
     <widget class="QWidget" name="tab">
      <attribute name="title">
@@ -223,7 +223,7 @@
       </property>
       <property name="geometry">
        <rect>
-        <x>0</x>
+        <x>260</x>
         <y>10</y>
         <width>250</width>
         <height>110</height>
@@ -312,8 +312,8 @@
      <widget class="QPushButton" name="btnRvizZoomOut">
       <property name="geometry">
        <rect>
-        <x>280</x>
-        <y>10</y>
+        <x>510</x>
+        <y>0</y>
         <width>70</width>
         <height>31</height>
        </rect>
@@ -325,8 +325,8 @@
      <widget class="QPushButton" name="btnRvizZoomIn">
       <property name="geometry">
        <rect>
-        <x>280</x>
-        <y>84</y>
+        <x>510</x>
+        <y>90</y>
         <width>70</width>
         <height>31</height>
        </rect>
@@ -335,69 +335,10 @@
        <string>-</string>
       </property>
      </widget>
-     <widget class="QWidget" name="layoutWidget">
-      <property name="geometry">
-       <rect>
-        <x>430</x>
-        <y>50</y>
-        <width>144</width>
-        <height>58</height>
-       </rect>
-      </property>
-      <layout class="QVBoxLayout" name="verticalLayout_2">
-       <item>
-        <widget class="QLineEdit" name="lineEdit_3">
-         <property name="text">
-          <string>odom</string>
-         </property>
-        </widget>
-       </item>
-       <item>
-        <widget class="QPushButton" name="pushButton_5">
-         <property name="text">
-          <string>Fix Frame</string>
-         </property>
-        </widget>
-       </item>
-      </layout>
-     </widget>
-     <widget class="QWidget" name="layoutWidget">
-      <property name="geometry">
-       <rect>
-        <x>10</x>
-        <y>210</y>
-        <width>59</width>
-        <height>83</height>
-       </rect>
-      </property>
-      <layout class="QVBoxLayout" name="verticalLayout">
-       <item>
-        <widget class="QCheckBox" name="checkBox">
-         <property name="text">
-          <string>TF</string>
-         </property>
-        </widget>
-       </item>
-       <item>
-        <widget class="QCheckBox" name="checkBox_2">
-         <property name="text">
-          <string>Scan</string>
-         </property>
-        </widget>
-       </item>
-       <item>
-        <widget class="QCheckBox" name="checkBox_3">
-         <property name="text">
-          <string>Map</string>
-         </property>
-        </widget>
-       </item>
-      </layout>
-     </widget>
      <widget class="QPushButton" name="btn_LoadRobot">
       <property name="geometry">
        <rect>
-        <x>470</x>
+        <x>0</x>
         <y>0</y>
         <width>101</width>
         <height>41</height>
@@ -405,6 +346,169 @@
       </property>
       <property name="text">
        <string>Load Robot</string>
+      </property>
+     </widget>
+     <widget class="QGroupBox" name="groupBox">
+      <property name="geometry">
+       <rect>
+        <x>0</x>
+        <y>160</y>
+        <width>221</width>
+        <height>41</height>
+       </rect>
+      </property>
+      <property name="styleSheet">
+       <string notr="true">QGroupBox {
+    border: none;
+}</string>
+      </property>
+      <property name="title">
+       <string/>
+      </property>
+      <widget class="QPushButton" name="pushButton_5">
+       <property name="geometry">
+        <rect>
+         <x>0</x>
+         <y>0</y>
+         <width>80</width>
+         <height>31</height>
+        </rect>
+       </property>
+       <property name="text">
+        <string>Fix Frame</string>
+       </property>
+      </widget>
+      <widget class="QComboBox" name="comboBox_FixFrame">
+       <property name="geometry">
+        <rect>
+         <x>80</x>
+         <y>0</y>
+         <width>141</width>
+         <height>31</height>
+        </rect>
+       </property>
+       <property name="editable">
+        <bool>true</bool>
+       </property>
+       <item>
+        <property name="text">
+         <string>base_footprint</string>
+        </property>
+       </item>
+      </widget>
+     </widget>
+     <widget class="QGroupBox" name="groupBox_3">
+      <property name="geometry">
+       <rect>
+        <x>0</x>
+        <y>200</y>
+        <width>221</width>
+        <height>41</height>
+       </rect>
+      </property>
+      <property name="styleSheet">
+       <string notr="true">QGroupBox {
+    border: none;
+}</string>
+      </property>
+      <property name="title">
+       <string/>
+      </property>
+      <widget class="QPushButton" name="btn_LaserScan">
+       <property name="geometry">
+        <rect>
+         <x>0</x>
+         <y>0</y>
+         <width>80</width>
+         <height>31</height>
+        </rect>
+       </property>
+       <property name="text">
+        <string>LaserScan</string>
+       </property>
+      </widget>
+      <widget class="QComboBox" name="comboBox_Laser">
+       <property name="geometry">
+        <rect>
+         <x>80</x>
+         <y>0</y>
+         <width>141</width>
+         <height>31</height>
+        </rect>
+       </property>
+       <property name="editable">
+        <bool>true</bool>
+       </property>
+       <item>
+        <property name="text">
+         <string>scan</string>
+        </property>
+       </item>
+      </widget>
+     </widget>
+     <widget class="QGroupBox" name="groupBox_4">
+      <property name="geometry">
+       <rect>
+        <x>0</x>
+        <y>240</y>
+        <width>221</width>
+        <height>41</height>
+       </rect>
+      </property>
+      <property name="styleSheet">
+       <string notr="true">QGroupBox {
+    border: none;
+}</string>
+      </property>
+      <property name="title">
+       <string/>
+      </property>
+      <widget class="QPushButton" name="btn_Maps">
+       <property name="geometry">
+        <rect>
+         <x>0</x>
+         <y>0</y>
+         <width>80</width>
+         <height>31</height>
+        </rect>
+       </property>
+       <property name="text">
+        <string>Map</string>
+       </property>
+      </widget>
+      <widget class="QComboBox" name="comboBox_Maps">
+       <property name="geometry">
+        <rect>
+         <x>80</x>
+         <y>0</y>
+         <width>141</width>
+         <height>31</height>
+        </rect>
+       </property>
+       <property name="editable">
+        <bool>true</bool>
+       </property>
+       <item>
+        <property name="text">
+         <string>map</string>
+        </property>
+       </item>
+      </widget>
+     </widget>
+     <widget class="QCheckBox" name="checkBox_TF">
+      <property name="geometry">
+       <rect>
+        <x>100</x>
+        <y>10</y>
+        <width>41</width>
+        <height>23</height>
+       </rect>
+      </property>
+      <property name="layoutDirection">
+       <enum>Qt::RightToLeft</enum>
+      </property>
+      <property name="text">
+       <string>TF</string>
       </property>
      </widget>
     </widget>
@@ -683,9 +787,9 @@
    <widget class="QTextEdit" name="textEdit_log">
     <property name="geometry">
      <rect>
-      <x>10</x>
+      <x>0</x>
       <y>590</y>
-      <width>581</width>
+      <width>591</width>
       <height>71</height>
      </rect>
     </property>
