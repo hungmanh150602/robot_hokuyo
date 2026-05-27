@@ -1,15 +1,22 @@
 #include "slam_manager.h"
 
-SlamManager::SlamManager(QObject *parnet)
-    : QObject(parnet)
+SlamManager::SlamManager(QWidget *parent)
+    : QObject(parent), parent_widget_(parent)
 {
     slam_process_ = new QProcess(this);
+    save_map_process_ = new QProcess(this);
 
     slam_process_->setProcessChannelMode(QProcess::MergedChannels);  // read all: stdout stderr
+    save_map_process_->setProcessChannelMode(QProcess::MergedChannels);  // read all: stdout stderr
 
     connect(slam_process_, &QProcess::readyRead, this, [=]()
     {
         emit newLog(QString::fromLocal8Bit(slam_process_->readAll()));
+    });
+
+    connect(save_map_process_, &QProcess::readyRead, this, [=]()
+    {
+        emit newLog(QString::fromLocal8Bit(save_map_process_->readAll()));
     });
 }
 
@@ -54,4 +61,37 @@ void SlamManager::stop()
         QStringList()
             << "-f"
             << "slam_toolbox");
+}
+
+void SlamManager::saveMap()
+{
+    QString file_path =
+            QFileDialog::getSaveFileName(
+                parent_widget_,
+                "Save Map",
+                QDir::homePath(),
+                "YAML Files (*.yaml)");
+
+        if(file_path.isEmpty())
+        {
+            return;
+        }
+
+        /* Remove .yaml */
+        if(file_path.endsWith(".yaml"))
+        {
+            file_path.chop(5);
+        }
+
+        QString command =
+                "source /opt/ros/humble/setup.bash && "
+                "source ~/ros2_workspace/install/setup.bash && "
+                "ros2 run nav2_map_server map_saver_cli "
+                "-f " + file_path;
+
+        QStringList arguments;
+
+        arguments << "-c" << command;
+
+        save_map_process_->start("bash", arguments);
 }

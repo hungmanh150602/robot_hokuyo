@@ -36,6 +36,7 @@ include_directories(
   include/lidar_hokuyo/cpp
   QTApp/robot_gui
   QTApp/robot_gui/lidar
+  QTApp/robot_gui/robot
   QTApp/robot_gui/ros
   QTApp/robot_gui/rviz
   QTApp/robot_gui/slam
@@ -100,6 +101,7 @@ add_executable(robot_gui
   QTApp/robot_gui/mainwindow.cpp
   QTApp/robot_gui/mainwindow.ui
   QTApp/robot_gui/lidar/lidar_manager.cpp
+  QTApp/robot_gui/robot/robot_manager.cpp
   QTApp/robot_gui/ros/ros_manager.cpp
   QTApp/robot_gui/rviz/rviz_manager.cpp
   QTApp/robot_gui/slam/slam_manager.cpp

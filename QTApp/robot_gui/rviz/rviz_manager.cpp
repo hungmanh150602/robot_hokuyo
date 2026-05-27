@@ -17,7 +17,6 @@ RVizManager::RVizManager(QApplication *app, QWidget *widget, rclcpp::Node::Share
     app_ = app;
     rviz_widget_ = widget;
     node_ = node;
-    robot_process_ = new QProcess(this);
 }
 
 void RVizManager::initializeRViz()
@@ -77,7 +76,19 @@ void RVizManager::initializeRViz()
     tf_buffer_ = std::make_shared<tf2_ros::Buffer>(node_->get_clock());
     tf_listener_ = std::make_shared<tf2_ros::TransformListener>(*tf_buffer_);
 
-    manager_->setFixedFrame("base_footprint");
+    manager_->setFixedFrame("base_link");
+    #endif
+
+    #if 1 /* Add RobotModel display */
+    auto robot_model = manager_->createDisplay(
+                "rviz_default_plugins/RobotModel",
+                "Robot Model",
+                true);
+
+    robot_model->subProp("Description Source")->setValue("Topic");
+    robot_model->subProp("Description Topic")->setValue("/robot_description");
+
+    Q_UNUSED(robot_model);
     #endif
 
     #if 1 /* Add TF */
@@ -217,62 +228,6 @@ void RVizManager::resetView()
     manager_->queueRender();
 }
 
-void RVizManager::loadRobotModel()
-{
-    QString fileName = "/home/hungubuntu/ros2_workspace/src/robot_hokuyo/urdf/Final_Assembly2.xacro";
-
-
-    if(fileName.isEmpty())
-    {
-        return;
-    }
-
-    /* Kill old robot_state_publisher */
-    if(robot_process_->state() != QProcess::NotRunning)
-    {
-        robot_process_->kill();
-        robot_process_->waitForFinished();
-    }
-
-    QString command;
-    QString urdfFile = "/tmp/robot.urdf";
-
-    #if 1 /* Xacro */
-    command =
-            "source /opt/ros/humble/setup.bash && "
-            "source ~/ros2_workspace/install/setup.bash && "
-            "xacro " + fileName + " > " + urdfFile + " && "
-            "ros2 run robot_state_publisher "
-            "robot_state_publisher "
-            + urdfFile;
-    #else /* urdf */
-    command =
-            "source /opt/ros/humble/setup.bash && "
-            "source ~/" + ros2_ws + "/install/setup.bash && "
-            "ros2 run robot_state_publisher "
-            "robot_state_publisher "
-            + fileName;
-    #endif
-
-    robot_process_->start("bash", QStringList() << "-c" << command);
-
-    /* Add RobotModel display */
-    auto robot_model = manager_->createDisplay(
-                "rviz_default_plugins/RobotModel",
-                "Robot Model",
-                true);
-
-    robot_model->subProp("Description Source")->setValue("Topic");
-    robot_model->subProp("Description Topic")->setValue("/robot_description");
-
-    Q_UNUSED(robot_model);
-}
-
-void RVizManager::setFixedFrame(QString frame)
-{
-    manager_->setFixedFrame(frame);
-}
-
 QStringList RVizManager::getAllFrames()
 {
     QStringList list;
@@ -364,12 +319,16 @@ void RVizManager::enableMap(bool enable)
     }
 }
 
+void RVizManager::setFixedFrame(QString frame)
+{
+    manager_->setFixedFrame(frame);
+}
+
 void RVizManager::setLaserTopic(QString topic)
 {
     if(laser_display_)
     {
-        laser_display_->subProp("Topic")
-                      ->setValue(topic);
+        laser_display_->subProp("Topic")->setValue(topic);
     }
 }
 
@@ -377,26 +336,10 @@ void RVizManager::setMapTopic(QString topic)
 {
     if(map_display_)
     {
-        map_display_->subProp("Topic")
-                    ->setValue(topic);
+        map_display_->subProp("Topic")->setValue(topic);
     }
 }
 
 void RVizManager::stop()
 {
-    if(robot_process_->state() != QProcess::NotRunning)
-    {
-        robot_process_->terminate();
-
-        if(!robot_process_->waitForFinished(3000))
-        {
-            robot_process_->kill();
-        }
-    }
-
-    QProcess::execute(
-        "pkill",
-        QStringList()
-            << "-f"
-            << "robot_state_publisher");
 }

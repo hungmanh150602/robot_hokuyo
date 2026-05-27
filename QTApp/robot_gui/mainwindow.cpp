@@ -6,15 +6,6 @@ MainWindow::MainWindow(QApplication *app, QWidget *parent)
 {
     ui->setupUi(this);
 
-    process_ = new QProcess(this);
-    process_->setProcessChannelMode(QProcess::MergedChannels);
-    connect(process_, &QProcess::readyRead, this, [=]()
-    {
-        QByteArray data = process_->readAll();
-
-        ui->textEdit_log->append(QString::fromLocal8Bit(data));
-    });
-
     /* ================================= TCP Socket ================================= */
     #if 1
     socket = new QTcpSocket(this);
@@ -48,7 +39,9 @@ MainWindow::MainWindow(QApplication *app, QWidget *parent)
 
     node_ = rclcpp::Node::make_shared("QT_Gui_Node");
     odom_pub_ = node_->create_publisher<nav_msgs::msg::Odometry>("/odom", 10);
+
     tf_broadcaster_ = std::make_shared<tf2_ros::TransformBroadcaster>(node_);
+
     joint_pub_ = node_->create_publisher<sensor_msgs::msg::JointState>("/joint_states", 10);
     #endif
 
@@ -74,21 +67,32 @@ MainWindow::MainWindow(QApplication *app, QWidget *parent)
     connect(ui->btnRvizDown, &QPushButton::clicked, rviz, &RVizManager::rotateDown);
     connect(ui->btnRvizReset, &QPushButton::clicked, rviz, &RVizManager::resetView);
 
-    // Load Robot Model
-    connect(ui->btn_LoadRobot, &QPushButton::clicked, this, &MainWindow::loadRobot);
     // TF
     connect(ui->checkBox_TF, &QCheckBox::toggled, rviz, &RVizManager::enableTF);
     // Frame
     connect(ui->comboBox_FixFrame, &QComboBox::currentTextChanged, rviz, &RVizManager::setFixedFrame);
     // Laser
+    connect(ui->checkBox_Laser, &QCheckBox::toggled, rviz, &RVizManager::enableLaser);
     connect(ui->btn_LaserScan, &QPushButton::clicked, this, &MainWindow::updateLaserTopics);
     connect(ui->comboBox_Laser, &QComboBox::currentTextChanged, rviz, &RVizManager::setLaserTopic);
     // Map
+    connect(ui->checkBox_Map, &QCheckBox::toggled, rviz, &RVizManager::enableMap);
     connect(ui->btn_Maps, &QPushButton::clicked, this, &MainWindow::updateMapTopics);
     connect(ui->comboBox_Maps, &QComboBox::currentTextChanged, rviz, &RVizManager::setMapTopic);
     #endif
 
-    #if 1 /* Slam Tool Box */
+    #if 1 /* ================================= Load Robot Model ================================= */
+    robot = new RobotManager(this);
+    connect(robot, &RobotManager::newLog, this, [=](QString text)
+    {
+        ui->textEdit_log->append(text);
+    });
+
+    connect(ui->btn_LoadRobot, &QPushButton::clicked, this, &MainWindow::loadRobot);
+    #endif
+
+    /* ================================= Slam ToolBox ================================= */
+    #if 1
     slam = new SlamManager(this);
 
     connect(slam, &SlamManager::newLog, this, [=](QString text)
@@ -99,9 +103,10 @@ MainWindow::MainWindow(QApplication *app, QWidget *parent)
     // button
     connect(ui->btn_SlamToolBox, &QPushButton::clicked, slam, &SlamManager::SlamToolBox);
     connect(ui->btn_StopSlam, &QPushButton::clicked, slam, &SlamManager::stop);
+    connect(ui->btn_SaveMap, &QPushButton::clicked, slam, &SlamManager::saveMap);
     #endif
 
-    /* ================================= Button ================================= */
+    /* ================================= UI Button ================================= */
     #if 1
     /* slider */
     connect(ui->Slider_Lin, &QSlider::valueChanged, this, &MainWindow::updateSpeedDisplay);
@@ -133,6 +138,11 @@ MainWindow::~MainWindow()
         lidar->stop();
     }
 
+    if(robot)
+    {
+        robot->stop();
+    }
+
     if(rviz)
     {
         rviz->stop();
@@ -150,8 +160,6 @@ MainWindow::~MainWindow()
 
 void MainWindow::connectToESP32()
 {
-    ui->textEdit_log->append("Connecting to ESP32 ...");
-
     QString ip = ui->lineEdit_ip->text();
     int port = ui->lineEdit_port->text().toInt();
 
@@ -164,7 +172,7 @@ void MainWindow::connectToESP32()
     else
     {
         ui->label_statustcp->setText("Disconnected");
-        ui->textEdit_log->append("Disconnected to ESP32.");
+        ui->textEdit_log->append("Fail Connect to ESP32!");
     }
 }
 
@@ -280,7 +288,7 @@ void MainWindow::updateMapTopics()
 
 void MainWindow::loadRobot()
 {
-    rviz->loadRobotModel();
+    robot->loadRobotModel();
 
     QTimer::singleShot(
         3000,

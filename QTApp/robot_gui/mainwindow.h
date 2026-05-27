@@ -7,7 +7,6 @@
 #include <QEvent>
 #include <QPainter>
 #include <QStyleOptionViewItem>
-#include <QFileDialog>
 
 #include <QTcpSocket>
 #include <QTimer>
@@ -27,6 +26,7 @@
 #include "lidar/lidar_manager.h"
 #include "rviz/rviz_manager.h"
 #include "slam/slam_manager.h"
+#include "robot/robot_manager.h"
 
 
 
@@ -64,8 +64,6 @@ private:
     Ui::MainWindow *ui;
     QApplication *app_;
 
-    QProcess *process_;
-
     QTcpSocket *socket;
 
     QTimer *odomTimer;
@@ -74,6 +72,7 @@ private:
     LidarManager *lidar;
     RVizManager *rviz;
     SlamManager *slam;
+    RobotManager *robot;
 
     rclcpp::Node::SharedPtr node_;
     rclcpp::Publisher<nav_msgs::msg::Odometry>::SharedPtr odom_pub_;

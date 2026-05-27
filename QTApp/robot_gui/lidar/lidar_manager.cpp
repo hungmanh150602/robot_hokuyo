@@ -6,7 +6,6 @@ LidarManager::LidarManager(QObject *parent)
     process_ = new QProcess(this);
 
     process_->setProcessChannelMode(QProcess::MergedChannels);  // read all: stdout stderr
-
     connect(process_, &QProcess::readyRead, this, [=]()
     {
         emit newLog(QString::fromLocal8Bit(process_->readAll()));

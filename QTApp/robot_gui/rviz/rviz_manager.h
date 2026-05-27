@@ -44,8 +44,6 @@ public:
     void rotateDown();
     void resetView();
 
-    void loadRobotModel();
-
     void enableTF(bool enable);
     void enableLaser(bool enable);
     void enableMap(bool enable);
@@ -75,8 +73,6 @@ private:
     std::shared_ptr<rviz_common::ros_integration::RosNodeAbstraction> rviz_ros_node_;
     std::shared_ptr<tf2_ros::Buffer> tf_buffer_;
     std::shared_ptr<tf2_ros::TransformListener> tf_listener_;
-
-    QProcess *robot_process_;
 };
 
 #endif

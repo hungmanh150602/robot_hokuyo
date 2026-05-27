@@ -1,7 +1,7 @@
 /*!
   \file
   \~japanese
-  \brief URG ƒZƒ“ƒT—p‚Ì•â•ŠÖ”
+  \brief URG ï¿½Zï¿½ï¿½ï¿½Tï¿½pï¿½Ì•â•ï¿½Öï¿½
   \~english
   \brief Auxiliary functions for the sensor
   \~
@@ -12,6 +12,7 @@
 
 #include "urg_utils.h"
 #include "urg_errno.h"
+#include <unistd.h>
 #define _USE_MATH_DEFINES
 #include <math.h>
 
@@ -84,7 +85,7 @@ void urg_distance_min_max(const urg_t *urg,
 
     *min_distance = urg->min_distance;
 
-    // \~japanese urg_set_measurement_data_size() ‚ğ”½‰f‚µ‚½‹——£‚ğ•Ô‚·
+    // \~japanese urg_set_measurement_data_size() ï¿½ğ”½‰fï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ô‚ï¿½
     // \~english returns the size configured with urg_set_measurement_data_size()
     *max_distance =
         (urg->range_data_byte == URG_COMMUNICATION_2_BYTE) ?
@@ -135,7 +136,7 @@ double urg_index2rad(const urg_t *urg, int index)
 
     actual_index = min(max(0, index), urg->last_data_index);
 
-    // \~japanese scanning_skip_step = 0 ‚Ì‚Æ‚«‚Í scanning_skip_step = 1 ‚Æ‚İ‚È‚·
+    // \~japanese scanning_skip_step = 0 ï¿½Ì‚Æ‚ï¿½ï¿½ï¿½ scanning_skip_step = 1 ï¿½Æ‚İ‚È‚ï¿½
     // \~english  "scanning_skip_step = 0" is equivalent to "scanning_skip_step = 1"
     step = actual_index * max(1, urg->scanning_skip_step) - urg->front_data_index + urg->received_first_index;
     
