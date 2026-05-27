@@ -1,0 +1,15 @@
+ros2 run <your_package_name> tcp_client_node
+ros2 run tf2_ros tf2_echo odom base_footprint
+=====================================================================================
+ros2 run nav2_map_server map_server --ros-args -p yaml_filename:=/home/lac/ros2_ws2/my_map_save.yaml -p use_sim_time:=false
+ros2 lifecycle set /map_server configure
+ros2 lifecycle set /map_server activate
+=======================================================================================
+ros2 run nav2_amcl amcl --ros-args -p use_sim_time:=false -p transform_tolerance:=2.0 -p base_frame_id:=base_footprint -p odom_frame_id:=odom -p map_frame_id:=map
+ros2 lifecycle set /amcl configure
+ros2 lifecycle set /amcl activate
+=======================================================================================
+ros2 run rviz2 rviz2 -d /opt/ros/humble/share/nav2_bringup/rviz/nav2_default_view.rviz
+Bấm nút 2D Pose Estimate, click lên bản đồ để đặt vị trí robot (khoảng (0,0) nếu chưa biết).
+=======================================================================================
+ros2 run tf2_ros tf2_echo map odom
