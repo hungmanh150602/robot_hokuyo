@@ -189,24 +189,11 @@
        <string>Slam ToolBox</string>
       </property>
      </widget>
-     <widget class="QPushButton" name="btn_StopSlam">
-      <property name="geometry">
-       <rect>
-        <x>10</x>
-        <y>70</y>
-        <width>101</width>
-        <height>51</height>
-       </rect>
-      </property>
-      <property name="text">
-       <string>Stop Slam</string>
-      </property>
-     </widget>
      <widget class="QPushButton" name="btn_SaveMap">
       <property name="geometry">
        <rect>
-        <x>10</x>
-        <y>130</y>
+        <x>120</x>
+        <y>10</y>
         <width>101</width>
         <height>51</height>
        </rect>
@@ -360,7 +347,7 @@
         <string>^</string>
        </property>
       </widget>
-      <widget class="QPushButton" name="btnRvizReset">
+      <widget class="QPushButton" name="btnRvizResetView">
        <property name="geometry">
         <rect>
          <x>70</x>
@@ -430,7 +417,7 @@
       <property name="title">
        <string/>
       </property>
-      <widget class="QPushButton" name="pushButton_5">
+      <widget class="QPushButton" name="btn_FixFrame">
        <property name="geometry">
         <rect>
          <x>0</x>
@@ -457,7 +444,7 @@
        </property>
        <item>
         <property name="text">
-         <string>base_footprint</string>
+         <string>map</string>
         </property>
        </item>
       </widget>
@@ -504,6 +491,11 @@
        <property name="editable">
         <bool>true</bool>
        </property>
+       <item>
+        <property name="text">
+         <string>/scan</string>
+        </property>
+       </item>
       </widget>
      </widget>
      <widget class="QGroupBox" name="groupBox_4">
@@ -548,6 +540,11 @@
        <property name="editable">
         <bool>true</bool>
        </property>
+       <item>
+        <property name="text">
+         <string>/map</string>
+        </property>
+       </item>
       </widget>
      </widget>
      <widget class="QCheckBox" name="checkBox_TF">
@@ -566,50 +563,38 @@
        <string>TF</string>
       </property>
      </widget>
-     <widget class="QCheckBox" name="checkBox_FixFrame">
+     <widget class="QPushButton" name="btnRvizReset">
       <property name="geometry">
        <rect>
-        <x>220</x>
-        <y>52</y>
-        <width>31</width>
+        <x>0</x>
+        <y>250</y>
+        <width>91</width>
         <height>31</height>
        </rect>
       </property>
-      <property name="tabletTracking">
-       <bool>false</bool>
-      </property>
-      <property name="layoutDirection">
-       <enum>Qt::RightToLeft</enum>
-      </property>
       <property name="text">
-       <string/>
-      </property>
-      <property name="tristate">
-       <bool>false</bool>
+       <string>ResetRViz</string>
       </property>
      </widget>
-     <widget class="QCheckBox" name="checkBox_Laser">
+     <widget class="QPushButton" name="btn_LoadMap">
       <property name="geometry">
        <rect>
-        <x>220</x>
-        <y>90</y>
-        <width>31</width>
+        <x>0</x>
+        <y>170</y>
+        <width>81</width>
         <height>31</height>
        </rect>
       </property>
-      <property name="layoutDirection">
-       <enum>Qt::RightToLeft</enum>
-      </property>
       <property name="text">
-       <string/>
+       <string>Load Map</string>
       </property>
      </widget>
-     <widget class="QCheckBox" name="checkBox_Map">
+     <widget class="QCheckBox" name="checkBox_UseSimTime">
       <property name="geometry">
        <rect>
-        <x>220</x>
-        <y>130</y>
-        <width>31</width>
+        <x>100</x>
+        <y>170</y>
+        <width>121</width>
         <height>31</height>
        </rect>
       </property>
@@ -617,7 +602,20 @@
        <enum>Qt::RightToLeft</enum>
       </property>
       <property name="text">
-       <string/>
+       <string>Use Sim Time</string>
+      </property>
+     </widget>
+     <widget class="QPushButton" name="btn_StopSlam">
+      <property name="geometry">
+       <rect>
+        <x>100</x>
+        <y>250</y>
+        <width>111</width>
+        <height>31</height>
+       </rect>
+      </property>
+      <property name="text">
+       <string>Kill Slam/Map</string>
       </property>
      </widget>
     </widget>
@@ -857,7 +855,7 @@
      <rect>
       <x>970</x>
       <y>80</y>
-      <width>111</width>
+      <width>101</width>
       <height>41</height>
      </rect>
     </property>
@@ -883,9 +881,9 @@
    <widget class="QPushButton" name="btnStop_lidar">
     <property name="geometry">
      <rect>
-      <x>1160</x>
+      <x>1080</x>
       <y>80</y>
-      <width>111</width>
+      <width>101</width>
       <height>41</height>
      </rect>
     </property>

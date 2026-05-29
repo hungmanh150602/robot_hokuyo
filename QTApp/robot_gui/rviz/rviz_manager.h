@@ -43,10 +43,9 @@ public:
     void rotateUp();
     void rotateDown();
     void resetView();
+    void resetRViz();
 
     void enableTF(bool enable);
-    void enableLaser(bool enable);
-    void enableMap(bool enable);
 
     void setLaserTopic(QString topic);
     void setMapTopic(QString topic);

@@ -72,7 +72,7 @@ int main(int argc, char *argv[])
 {
     rclcpp::init(argc, argv);
 
-    auto node = rclcpp::Node::make_shared("hokuyo_node");
+    auto node = rclcpp::Node::make_shared("lidar_hokuyo_node");
     auto publisher = node->create_publisher<sensor_msgs::msg::LaserScan>("/scan", 10);
 
     // enum
@@ -91,11 +91,6 @@ int main(int argc, char *argv[])
         printf("Cannot open LiDAR\n");
         return 1;
     }
-
-    // if (open_urg_sensor(&urg, argc, argv) < 0)
-    // {
-    //     return 1;
-    // }
 
     data = (long *)malloc(urg_max_data_size(&urg) * sizeof(data[0]));
     if (!data)
@@ -129,7 +124,7 @@ int main(int argc, char *argv[])
         }
         // print_data(&urg, data, n, time_stamp);
 
-        // Publish topic /hokuyo_scan
+        // Publish topic /scan
         sensor_msgs::msg::LaserScan scan;
         scan.header.stamp = node->now();
         scan.header.frame_id = "lidar_link";
@@ -174,6 +169,8 @@ int main(int argc, char *argv[])
     // \~english Disconnects
     free(data);
     urg_close(&urg);
+
+    RCLCPP_INFO(node->get_logger(), "LiDAR node stopped");
 
 #if defined(URG_MSC)
     getchar();

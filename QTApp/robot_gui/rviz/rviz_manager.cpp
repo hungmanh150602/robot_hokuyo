@@ -76,7 +76,7 @@ void RVizManager::initializeRViz()
     tf_buffer_ = std::make_shared<tf2_ros::Buffer>(node_->get_clock());
     tf_listener_ = std::make_shared<tf2_ros::TransformListener>(*tf_buffer_);
 
-    manager_->setFixedFrame("base_link");
+    manager_->setFixedFrame("map");
     #endif
 
     #if 1 /* Add RobotModel display */
@@ -102,18 +102,25 @@ void RVizManager::initializeRViz()
     laser_display_ = manager_->createDisplay(
                 "rviz_default_plugins/LaserScan",
                 "Laser",
-                false);
+                true);
 
-//    laser_display_->subProp("Topic")->setValue("/scan");
+    laser_display_->subProp("Style")->setValue("Points");
+    laser_display_->subProp("Size (Pixels)")->setValue(3);
+    laser_display_->subProp("Alpha")->setValue(1);
+    laser_display_->subProp("Decay Time")->setValue(0);
+    laser_display_->subProp("Color Transformer")->setValue("FlatColor");
+    laser_display_->subProp("Color")->setValue(QColor(237, 51, 59));
+
+    laser_display_->subProp("Topic")->setValue("/scan");
     #endif
 
     #if 1 /* map */
     map_display_ = manager_->createDisplay(
             "rviz_default_plugins/Map",
             "Map",
-            false);
+            true);
 
-//    map_display_->subProp("Topic")->setValue("/map");
+    map_display_->subProp("Topic")->setValue("/map");
     #endif
 
     #if 0 /* trajectory */
@@ -303,22 +310,6 @@ void RVizManager::enableTF(bool enable)
     }
 }
 
-void RVizManager::enableLaser(bool enable)
-{
-    if(laser_display_)
-    {
-        laser_display_->setEnabled(enable);
-    }
-}
-
-void RVizManager::enableMap(bool enable)
-{
-    if(map_display_)
-    {
-        map_display_->setEnabled(enable);
-    }
-}
-
 void RVizManager::setFixedFrame(QString frame)
 {
     manager_->setFixedFrame(frame);
@@ -342,4 +333,92 @@ void RVizManager::setMapTopic(QString topic)
 
 void RVizManager::stop()
 {
+}
+
+void RVizManager::resetRViz()
+{
+    manager_->removeAllDisplays();
+
+    #if 1/* Layout */
+    if(rviz_widget_->layout() == nullptr)
+    {
+        QVBoxLayout *layout = new QVBoxLayout(rviz_widget_);
+
+        layout->setContentsMargins(0,0,0,0);
+
+        layout->addWidget(render_panel_);
+    }
+    else
+    {
+        rviz_widget_->layout()->addWidget(render_panel_);
+    }
+    #endif
+
+    #if 1 /* Add Grid */
+    auto grid = manager_->createDisplay(
+                "rviz_default_plugins/Grid",
+                "Grid",
+                true);
+
+    Q_UNUSED(grid);
+    #endif
+
+    #if 1 /* Fixed frame */
+    tf_buffer_ = std::make_shared<tf2_ros::Buffer>(node_->get_clock());
+    tf_listener_ = std::make_shared<tf2_ros::TransformListener>(*tf_buffer_);
+
+    manager_->setFixedFrame("map");
+    #endif
+
+    #if 1 /* Add RobotModel display */
+    auto robot_model = manager_->createDisplay(
+                "rviz_default_plugins/RobotModel",
+                "Robot Model",
+                true);
+
+    robot_model->subProp("Description Source")->setValue("Topic");
+    robot_model->subProp("Description Topic")->setValue("/robot_description");
+
+    Q_UNUSED(robot_model);
+    #endif
+
+    #if 1 /* Add TF */
+    tf_display_ = manager_->createDisplay(
+                "rviz_default_plugins/TF",
+                "TF",
+                false);
+    #endif
+
+    #if 1 /* Add LaserScan */
+    laser_display_ = manager_->createDisplay(
+                "rviz_default_plugins/LaserScan",
+                "Laser",
+                true);
+
+    laser_display_->subProp("Style")->setValue("Points");
+    laser_display_->subProp("Size (Pixels)")->setValue(3);
+    laser_display_->subProp("Alpha")->setValue(1);
+    laser_display_->subProp("Decay Time")->setValue(0);
+    laser_display_->subProp("Color Transformer")->setValue("FlatColor");
+    laser_display_->subProp("Color")->setValue(QColor(237, 51, 59));
+
+    laser_display_->subProp("Topic")->setValue("/scan");
+    #endif
+
+    #if 1 /* map */
+    map_display_ = manager_->createDisplay(
+            "rviz_default_plugins/Map",
+            "Map",
+            true);
+
+    map_display_->subProp("Topic")->setValue("/map");
+    #endif
+
+    #if 0 /* trajectory */
+    auto pose =
+        manager_->createDisplay(
+            "rviz_default_plugins/Pose",
+            "Pose",
+            true);
+    #endif
 }

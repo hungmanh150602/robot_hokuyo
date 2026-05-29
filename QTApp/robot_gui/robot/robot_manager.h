@@ -18,6 +18,7 @@ signals:
 
 private:
     QProcess *robot_process_;
+    QProcess *map_tf_process_;
 
 };
 

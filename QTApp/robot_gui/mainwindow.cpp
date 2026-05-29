@@ -17,20 +17,6 @@ MainWindow::MainWindow(QApplication *app, QWidget *parent)
     connect(socket, &QTcpSocket::disconnected, this, [=](){ ui->label_statustcp->setText("DisConnected"); });
     #endif
 
-    /* ================================= Connect lidar ================================= */
-    #if 1
-    lidar = new LidarManager(this);
-
-    connect(lidar, &LidarManager::newLog, this, [=](QString text)
-    {
-        ui->textEdit_log->append(text);
-    });
-
-    // button
-    connect(ui->btnConnect_lidar, &QPushButton::clicked, lidar, &LidarManager::startLidar);
-    connect(ui->btnStop_lidar, &QPushButton::clicked, lidar, &LidarManager::stop);
-    #endif
-
     /* ================================= Odometry,TF Publisher ================================= */
     #if 1
     odomTimer = new QTimer(this);
@@ -65,18 +51,18 @@ MainWindow::MainWindow(QApplication *app, QWidget *parent)
     connect(ui->btnRvizRight, &QPushButton::clicked, rviz, &RVizManager::rotateRight);
     connect(ui->btnRvizUp, &QPushButton::clicked, rviz, &RVizManager::rotateUp);
     connect(ui->btnRvizDown, &QPushButton::clicked, rviz, &RVizManager::rotateDown);
-    connect(ui->btnRvizReset, &QPushButton::clicked, rviz, &RVizManager::resetView);
+    connect(ui->btnRvizResetView, &QPushButton::clicked, rviz, &RVizManager::resetView);
+    connect(ui->btnRvizReset, &QPushButton::clicked, rviz, &RVizManager::resetRViz);
 
     // TF
     connect(ui->checkBox_TF, &QCheckBox::toggled, rviz, &RVizManager::enableTF);
     // Frame
+    connect(ui->btn_FixFrame, &QPushButton::clicked, this, &MainWindow::updateFrameList);
     connect(ui->comboBox_FixFrame, &QComboBox::currentTextChanged, rviz, &RVizManager::setFixedFrame);
     // Laser
-    connect(ui->checkBox_Laser, &QCheckBox::toggled, rviz, &RVizManager::enableLaser);
     connect(ui->btn_LaserScan, &QPushButton::clicked, this, &MainWindow::updateLaserTopics);
     connect(ui->comboBox_Laser, &QComboBox::currentTextChanged, rviz, &RVizManager::setLaserTopic);
     // Map
-    connect(ui->checkBox_Map, &QCheckBox::toggled, rviz, &RVizManager::enableMap);
     connect(ui->btn_Maps, &QPushButton::clicked, this, &MainWindow::updateMapTopics);
     connect(ui->comboBox_Maps, &QComboBox::currentTextChanged, rviz, &RVizManager::setMapTopic);
     #endif
@@ -88,7 +74,21 @@ MainWindow::MainWindow(QApplication *app, QWidget *parent)
         ui->textEdit_log->append(text);
     });
 
-    connect(ui->btn_LoadRobot, &QPushButton::clicked, this, &MainWindow::loadRobot);
+    connect(ui->btn_LoadRobot, &QPushButton::clicked, robot, &RobotManager::loadRobotModel);
+    #endif
+
+    /* ================================= Connect lidar ================================= */
+    #if 1
+    lidar = new LidarManager(this);
+
+    connect(lidar, &LidarManager::newLog, this, [=](QString text)
+    {
+        ui->textEdit_log->append(text);
+    });
+
+    // button
+    connect(ui->btnConnect_lidar, &QPushButton::clicked, lidar, &LidarManager::startLidar);
+    connect(ui->btnStop_lidar, &QPushButton::clicked, lidar, &LidarManager::stop);
     #endif
 
     /* ================================= Slam ToolBox ================================= */
@@ -104,6 +104,8 @@ MainWindow::MainWindow(QApplication *app, QWidget *parent)
     connect(ui->btn_SlamToolBox, &QPushButton::clicked, slam, &SlamManager::SlamToolBox);
     connect(ui->btn_StopSlam, &QPushButton::clicked, slam, &SlamManager::stop);
     connect(ui->btn_SaveMap, &QPushButton::clicked, slam, &SlamManager::saveMap);
+    connect(ui->checkBox_UseSimTime, &QCheckBox::toggled, slam, &SlamManager::checkUseSimTime);
+    connect(ui->btn_LoadMap, &QPushButton::clicked, slam, &SlamManager::loadMap);
     #endif
 
     /* ================================= UI Button ================================= */
@@ -284,19 +286,6 @@ void MainWindow::updateMapTopics()
 
     ui->comboBox_Maps->clear();
     ui->comboBox_Maps->addItems(topics);
-}
-
-void MainWindow::loadRobot()
-{
-    robot->loadRobotModel();
-
-    QTimer::singleShot(
-        3000,
-        this,
-        [=]()
-    {
-        updateFrameList();
-    });
 }
 
 void MainWindow::moveForward()
