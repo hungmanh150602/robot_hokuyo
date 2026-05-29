@@ -1,4 +1,5 @@
 #include "lidar_manager.h"
+#include "config_path.h"
 
 LidarManager::LidarManager(QObject *parent)
     : QObject(parent)
@@ -23,8 +24,7 @@ void LidarManager::startLidar()
     QStringList arguments;
 
     arguments << "-c"
-              << "source ~/ros2_workspace/install/setup.bash && "
-                 "ros2 run robot_hokuyo publish_lidar";
+              << src_ws + " && " + lidar_run;
 
     process_->start(program, arguments);
 

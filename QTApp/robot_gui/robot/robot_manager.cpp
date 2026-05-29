@@ -1,4 +1,5 @@
 #include "robot_manager.h"
+#include "config_path.h"
 
 RobotManager::RobotManager(QObject *parent)
     : QObject(parent)
@@ -33,13 +34,10 @@ void RobotManager::loadRobotModel()
     QString urdfFile = "/tmp/robot.urdf";
 
     #if 1 /* Xacro */
-    command =
-            "source /opt/ros/humble/setup.bash && "
-            "source ~/ros2_workspace/install/setup.bash && "
-            "xacro " + fileName + " > " + urdfFile + " && "
-            "ros2 run robot_state_publisher "
-            "robot_state_publisher "
-            + urdfFile;
+    command = src_ros + " && "
+              + src_ws + " && "
+              "xacro " + fileName + " > " + urdfFile + " && "
+            + robot_run + " robot_state_publisher " + urdfFile;
     #else /* urdf */
     command =
             "source /opt/ros/humble/setup.bash && "

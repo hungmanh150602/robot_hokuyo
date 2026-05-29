@@ -141,8 +141,21 @@ install(TARGETS
   DESTINATION lib/${PROJECT_NAME}
 )
 
+# Install Python scripts
+# Install Python executables
 install(
-  DIRECTORY urdf meshes launch rviz maps
+  PROGRAMS
+    # scripts/path_planner.py
+  DESTINATION lib/${PROJECT_NAME}
+)
+
+install(DIRECTORY
+  urdf
+  meshes
+  launch
+  rviz
+  maps
+  scripts
   DESTINATION share/${PROJECT_NAME}
 )
 
