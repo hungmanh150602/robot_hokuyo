@@ -20,7 +20,7 @@
     </property>
     <property name="geometry">
      <rect>
-      <x>80</x>
+      <x>910</x>
       <y>10</y>
       <width>301</width>
       <height>161</height>
@@ -109,7 +109,7 @@
    <widget class="QTabWidget" name="tabWidget">
     <property name="geometry">
      <rect>
-      <x>0</x>
+      <x>690</x>
       <y>180</y>
       <width>591</width>
       <height>311</height>
@@ -623,7 +623,7 @@
    <widget class="QGroupBox" name="groupBox_pose">
     <property name="geometry">
      <rect>
-      <x>430</x>
+      <x>720</x>
       <y>0</y>
       <width>131</width>
       <height>145</height>
@@ -732,7 +732,7 @@
    <widget class="QWidget" name="layoutWidget">
     <property name="geometry">
      <rect>
-      <x>600</x>
+      <x>390</x>
       <y>10</y>
       <width>301</width>
       <height>50</height>
@@ -781,7 +781,7 @@
    <widget class="QWidget" name="layoutWidget">
     <property name="geometry">
      <rect>
-      <x>970</x>
+      <x>10</x>
       <y>10</y>
       <width>301</width>
       <height>62</height>
@@ -853,7 +853,7 @@
    <widget class="QPushButton" name="btnConnect_lidar">
     <property name="geometry">
      <rect>
-      <x>970</x>
+      <x>10</x>
       <y>80</y>
       <width>101</width>
       <height>41</height>
@@ -863,25 +863,10 @@
      <string>Connect Lidar</string>
     </property>
    </widget>
-   <widget class="QWidget" name="verticalLayoutWidget">
-    <property name="geometry">
-     <rect>
-      <x>590</x>
-      <y>130</y>
-      <width>691</width>
-      <height>541</height>
-     </rect>
-    </property>
-    <layout class="QVBoxLayout" name="verticalLayout_Rviz">
-     <item>
-      <widget class="QWidget" name="rvizWidget" native="true"/>
-     </item>
-    </layout>
-   </widget>
    <widget class="QPushButton" name="btnStop_lidar">
     <property name="geometry">
      <rect>
-      <x>1080</x>
+      <x>120</x>
       <y>80</y>
       <width>101</width>
       <height>41</height>
@@ -894,12 +879,27 @@
    <widget class="QTextEdit" name="textEdit_log">
     <property name="geometry">
      <rect>
-      <x>0</x>
+      <x>690</x>
       <y>490</y>
       <width>591</width>
       <height>171</height>
      </rect>
     </property>
+   </widget>
+   <widget class="QWidget" name="verticalLayoutWidget">
+    <property name="geometry">
+     <rect>
+      <x>0</x>
+      <y>130</y>
+      <width>691</width>
+      <height>541</height>
+     </rect>
+    </property>
+    <layout class="QVBoxLayout" name="verticalLayout_Rviz">
+     <item>
+      <widget class="QWidget" name="rvizWidget" native="true"/>
+     </item>
+    </layout>
    </widget>
   </widget>
   <widget class="QMenuBar" name="menubar">
