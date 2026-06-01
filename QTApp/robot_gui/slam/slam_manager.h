@@ -20,6 +20,8 @@ public:
     void saveMap();
     void checkUseSimTime(bool checked);
     void loadMap();
+    void amcl_run();
+    void nav2_run();
 
 signals:
     void newLog(QString text);
@@ -28,8 +30,14 @@ private:
     QWidget *parent_widget_;
     QProcess *slam_process_;
     QProcess *save_map_process_;
+
     QProcess *load_map_process_;
     QProcess *configure_active_process_;
+
+    QProcess *amcl_process_;
+    QProcess *amcl_configure_active_process_;
+
+    QProcess *nav2_process_;
 
     bool use_sim_time_ = false;
 };

@@ -110,6 +110,8 @@ MainWindow::MainWindow(QApplication *app, QWidget *parent)
     connect(ui->btn_SaveMap, &QPushButton::clicked, slam, &SlamManager::saveMap);
     connect(ui->checkBox_UseSimTime, &QCheckBox::toggled, slam, &SlamManager::checkUseSimTime);
     connect(ui->btn_LoadMap, &QPushButton::clicked, slam, &SlamManager::loadMap);
+    connect(ui->btn_AMCL, &QPushButton::clicked, slam, &SlamManager::amcl_run);
+    connect(ui->btn_NAV2, &QPushButton::clicked, slam, &SlamManager::nav2_run);
     #endif
 
     /* ================================= UI Button ================================= */

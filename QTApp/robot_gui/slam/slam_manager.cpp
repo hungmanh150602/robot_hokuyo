@@ -8,11 +8,17 @@ SlamManager::SlamManager(QWidget *parent)
     save_map_process_ = new QProcess(this);
     load_map_process_ = new QProcess(this);
     configure_active_process_ = new QProcess(this);
+    amcl_process_ = new QProcess(this);
+    amcl_configure_active_process_ = new QProcess(this);
+    nav2_process_ = new QProcess(this);
 
     slam_process_->setProcessChannelMode(QProcess::MergedChannels);  // read all: stdout stderr
     save_map_process_->setProcessChannelMode(QProcess::MergedChannels);  // read all: stdout stderr
     load_map_process_->setProcessChannelMode(QProcess::MergedChannels);  // read all: stdout stderr
     configure_active_process_->setProcessChannelMode(QProcess::MergedChannels);  // read all: stdout stderr
+    amcl_process_->setProcessChannelMode(QProcess::MergedChannels);  // read all: stdout stderr
+    amcl_configure_active_process_->setProcessChannelMode(QProcess::MergedChannels);  // read all: stdout stderr
+    nav2_process_->setProcessChannelMode(QProcess::MergedChannels);  // read all: stdout stderr
 
     connect(slam_process_, &QProcess::readyRead, this, [=]()
     {
@@ -32,6 +38,21 @@ SlamManager::SlamManager(QWidget *parent)
     connect(configure_active_process_, &QProcess::readyRead, this, [=]()
     {
         emit newLog(QString::fromLocal8Bit(configure_active_process_->readAll()));
+    });
+
+    connect(amcl_process_, &QProcess::readyRead, this, [=]()
+    {
+        emit newLog(QString::fromLocal8Bit(amcl_process_->readAll()));
+    });
+
+    connect(amcl_configure_active_process_, &QProcess::readyRead, this, [=]()
+    {
+        emit newLog(QString::fromLocal8Bit(amcl_configure_active_process_->readAll()));
+    });
+
+    connect(nav2_process_, &QProcess::readyRead, this, [=]()
+    {
+        emit newLog(QString::fromLocal8Bit(nav2_process_->readAll()));
     });
 }
 
@@ -150,6 +171,87 @@ void SlamManager::loadMap()
         });
 }
 
+void SlamManager::amcl_run()
+{
+    QString command =
+            src_ros + " && "
+            + src_ws + " && "
+            "ros2 run nav2_amcl amcl"
+            " --ros-args ";
+
+    if(use_sim_time_) {
+        command += "-p use_sim_time:=true";
+    }
+    else {
+        command += "-p use_sim_time:=false";
+    }
+
+    command += " -p transform_tolerance:=2.0";
+    command += " -p base_frame_id:=base_footprint";
+    command += " -p odom_frame_id:=odom";
+    command += " -p map_frame_id:=map";
+
+    QStringList arguments;
+
+    arguments << "-c" << command;
+
+    amcl_process_->start("bash", arguments);
+
+    // wait 3s then config
+    QTimer::singleShot(
+        3000,
+        parent_widget_,
+        [=]()
+    {
+        QString command =
+                src_ros + " && "
+                + src_ws + " && "
+                + "ros2 lifecycle set /amcl configure";
+        command += " && sleep 3 && ";
+        command += "ros2 lifecycle set /amcl activate";
+
+        QStringList arguments;
+
+        arguments << "-c" << command;
+
+        amcl_configure_active_process_->start("bash", arguments);
+    });
+}
+
+void SlamManager::nav2_run()
+{
+    QString file_path = QFileDialog::getOpenFileName(
+                parent_widget_,
+                "Load NAV2",
+                QDir::homePath(),
+                "YAML Files (*.yaml)");
+
+    if(file_path.isEmpty())
+    {
+        return;
+    }
+
+    QString command =
+            src_ros + " && "
+            + src_ws + " && "
+            "ros2 launch nav2_bringup navigation_launch.py";
+
+    if(use_sim_time_) {
+        command += " use_sim_time:=true";
+    }
+    else {
+        command += " use_sim_time:=false";
+    }
+
+    command += " params_file:=" + file_path;
+
+    QStringList arguments;
+
+    arguments << "-c" << command;
+
+    amcl_process_->start("bash", arguments);
+}
+
 void SlamManager::stop()
 {
     if(slam_process_->state() != QProcess::NotRunning)
@@ -183,4 +285,30 @@ void SlamManager::stop()
         QStringList()
             << "-f"
             << "map_server");
+
+    if(amcl_process_->state() != QProcess::NotRunning)
+    {
+        amcl_process_->terminate();
+
+        if(!amcl_process_->waitForFinished(3000))
+        {
+            amcl_process_->kill();
+        }
+    }
+
+    QProcess::execute(
+        "pkill",
+        QStringList()
+            << "-f"
+            << "/amcl");
+
+    if(nav2_process_->state() != QProcess::NotRunning)
+    {
+        nav2_process_->terminate();
+
+        if(!nav2_process_->waitForFinished(3000))
+        {
+            nav2_process_->kill();
+        }
+    }
 }
