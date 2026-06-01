@@ -17,6 +17,8 @@ namespace rviz_common
 class RenderPanel;
 class VisualizationManager;
 class Display;
+class ToolManager;
+class Tool;
 
 namespace ros_integration
 {
@@ -38,11 +40,7 @@ public:
 
     void zoomIn();
     void zoomOut();
-    void rotateLeft();
-    void rotateRight();
-    void rotateUp();
-    void rotateDown();
-    void resetView();
+    void topView();
     void resetRViz();
 
     void enableTF(bool enable);
@@ -54,7 +52,13 @@ public:
     QStringList getAllFrames();
     QStringList getLaserTopics();
     QStringList getMapTopics();
+
+    void setInitialPoseTool();
+    void setGoalPoseTool();
     void stop();
+
+//signals:
+//    void newLog(const QString &msg);
 
 private:
     QApplication *app_;
@@ -72,6 +76,9 @@ private:
     std::shared_ptr<rviz_common::ros_integration::RosNodeAbstraction> rviz_ros_node_;
     std::shared_ptr<tf2_ros::Buffer> tf_buffer_;
     std::shared_ptr<tf2_ros::TransformListener> tf_listener_;
+
+    rviz_common::Tool *initial_pose_tool_;
+    rviz_common::Tool *goal_pose_tool_;
 };
 
 #endif

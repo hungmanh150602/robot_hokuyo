@@ -17,6 +17,13 @@ MainWindow::MainWindow(QApplication *app, QWidget *parent)
     connect(socket, &QTcpSocket::disconnected, this, [=](){ ui->label_statustcp->setText("DisConnected"); });
     #endif
 
+    /* ================================= ROS timer ================================= */
+    #if 1
+    ros_timer = new QTimer(this);
+    connect(ros_timer, &QTimer::timeout, this, [=](){ rclcpp::spin_some(node_); });
+    ros_timer->start(10); // 10 ms
+    #endif
+
     /* ================================= Odometry,TF Publisher ================================= */
     #if 1
     odomTimer = new QTimer(this);
@@ -24,18 +31,15 @@ MainWindow::MainWindow(QApplication *app, QWidget *parent)
     odomTimer->start(20); // 20 ms
 
     node_ = rclcpp::Node::make_shared("QT_Gui_Node");
+
+    cmd_vel_sub_ = node_->create_subscription<geometry_msgs::msg::Twist>(
+                "/cmd_vel",
+                10,
+                std::bind(&MainWindow::CmdVelCallback,this, std::placeholders::_1));
     odom_pub_ = node_->create_publisher<nav_msgs::msg::Odometry>("/odom", 10);
 
     tf_broadcaster_ = std::make_shared<tf2_ros::TransformBroadcaster>(node_);
-
     joint_pub_ = node_->create_publisher<sensor_msgs::msg::JointState>("/joint_states", 10);
-    #endif
-
-    /* ================================= ros timer ================================= */
-    #if 1
-    ros_timer = new QTimer(this);
-    connect(ros_timer, &QTimer::timeout, this, [=](){ rclcpp::spin_some(node_); });
-    ros_timer->start(10); // 10 ms
     #endif
 
     /* ================================= Rviz ================================= */
@@ -47,11 +51,7 @@ MainWindow::MainWindow(QApplication *app, QWidget *parent)
     // button rviz
     connect(ui->btnRvizZoomIn, &QPushButton::clicked, rviz, &RVizManager::zoomIn);
     connect(ui->btnRvizZoomOut, &QPushButton::clicked, rviz, &RVizManager::zoomOut);
-    connect(ui->btnRvizLeft, &QPushButton::clicked, rviz, &RVizManager::rotateLeft);
-    connect(ui->btnRvizRight, &QPushButton::clicked, rviz, &RVizManager::rotateRight);
-    connect(ui->btnRvizUp, &QPushButton::clicked, rviz, &RVizManager::rotateUp);
-    connect(ui->btnRvizDown, &QPushButton::clicked, rviz, &RVizManager::rotateDown);
-    connect(ui->btnRvizResetView, &QPushButton::clicked, rviz, &RVizManager::resetView);
+    connect(ui->btnRvizResetView, &QPushButton::clicked, rviz, &RVizManager::topView);
     connect(ui->btnRvizReset, &QPushButton::clicked, rviz, &RVizManager::resetRViz);
 
     // TF
@@ -65,6 +65,10 @@ MainWindow::MainWindow(QApplication *app, QWidget *parent)
     // Map
     connect(ui->btn_Maps, &QPushButton::clicked, this, &MainWindow::updateMapTopics);
     connect(ui->comboBox_Maps, &QComboBox::currentTextChanged, rviz, &RVizManager::setMapTopic);
+    // 2D Pose Estimate
+    connect(ui->btn_2DPose, &QPushButton::clicked, rviz, &RVizManager::setInitialPoseTool);
+    // 2D Goal Pose
+    connect(ui->btn_2DGoal, &QPushButton::clicked, rviz, &RVizManager::setGoalPoseTool);
     #endif
 
     #if 1 /* ================================= Load Robot Model ================================= */
@@ -187,6 +191,24 @@ void MainWindow::disconnectToESP32()
     }
 }
 
+void MainWindow::CmdVelCallback(
+    const geometry_msgs::msg::Twist::SharedPtr msg)
+{
+    linear_velocity = msg->linear.x;
+    angular_velocity = msg->angular.z;
+
+    // compute msg send to tcp
+    double vR = linear_velocity + L/2.0 * angular_velocity;
+    double vL = linear_velocity - L/2.0 * angular_velocity;
+    int msg_vel_L = (vL - 0.00053) / 0.001915;
+    int msg_vel_R = (vR - 0.00053) / 0.001915;
+
+    if(socket->state() == QAbstractSocket::ConnectedState) {
+        QString msg = QString("%1,%2\n").arg(-msg_vel_L).arg(msg_vel_R);
+        socket->write(msg.toUtf8());
+    }
+}
+
 void MainWindow::updateOdometry()
 {
     double dt = 0.02;
@@ -301,10 +323,10 @@ void MainWindow::moveForward()
     left_omega = -vL / wheel_radius;
     right_omega = vR / wheel_radius;
 
-    QString msg = QString("%1,%2\n").arg(-Lin_vel).arg(Lin_vel);
-    socket->write(msg.toUtf8());
-
-    //    qDebug() << "moveForward";
+    if(socket->state() == QAbstractSocket::ConnectedState) {
+        QString msg = QString("%1,%2\n").arg(-Lin_vel).arg(Lin_vel);
+        socket->write(msg.toUtf8());
+    }
 }
 
 void MainWindow::moveBack()
@@ -320,10 +342,10 @@ void MainWindow::moveBack()
     left_omega = vL / wheel_radius;
     right_omega = -vR / wheel_radius;
 
-    QString msg = QString("%1,%2\n").arg(Lin_vel).arg(-Lin_vel);
-    socket->write(msg.toUtf8());
-
-    //    qDebug() << "moveBack";
+    if(socket->state() == QAbstractSocket::ConnectedState) {
+        QString msg = QString("%1,%2\n").arg(Lin_vel).arg(-Lin_vel);
+        socket->write(msg.toUtf8());
+    }
 }
 
 void MainWindow::moveLeft()
@@ -339,10 +361,10 @@ void MainWindow::moveLeft()
     left_omega = vL / wheel_radius;
     right_omega = vR / wheel_radius;
 
-    QString msg = QString("%1,%2\n").arg(Lin_vel).arg(Lin_vel);
-    socket->write(msg.toUtf8());
-
-    //    qDebug() << "moveLeft";
+    if(socket->state() == QAbstractSocket::ConnectedState) {
+        QString msg = QString("%1,%2\n").arg(Lin_vel).arg(Lin_vel);
+        socket->write(msg.toUtf8());
+    }
 }
 
 void MainWindow::moveRight()
@@ -358,10 +380,10 @@ void MainWindow::moveRight()
     left_omega = -vL / wheel_radius;
     right_omega = -vR / wheel_radius;
 
-    QString msg = QString("%1,%2\n").arg(-Lin_vel).arg(-Lin_vel);
-    socket->write(msg.toUtf8());
-
-    //    qDebug() << "moveRight";
+    if(socket->state() == QAbstractSocket::ConnectedState) {
+        QString msg = QString("%1,%2\n").arg(-Lin_vel).arg(-Lin_vel);
+        socket->write(msg.toUtf8());
+    }
 }
 
 void MainWindow::stopRobot()
@@ -372,8 +394,8 @@ void MainWindow::stopRobot()
     left_omega = 0.0;
     right_omega = 0.0;
 
-    QString msg = "0,0\n";
-    socket->write(msg.toUtf8());
-
-    //    qDebug() << "stopRobot";
+    if(socket->state() == QAbstractSocket::ConnectedState) {
+        QString msg = QString("0,0\n");
+        socket->write(msg.toUtf8());
+    }
 }

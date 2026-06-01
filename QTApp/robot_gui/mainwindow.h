@@ -47,6 +47,7 @@ private slots:
     void disconnectToESP32();
 
     void updateSpeedDisplay();
+    void CmdVelCallback(const geometry_msgs::msg::Twist::SharedPtr msg);
     void updateOdometry();
 
     void updateFrameList();
@@ -74,6 +75,7 @@ private:
     RobotManager *robot;
 
     rclcpp::Node::SharedPtr node_;
+    rclcpp::Subscription<geometry_msgs::msg::Twist>::SharedPtr cmd_vel_sub_;
     rclcpp::Publisher<nav_msgs::msg::Odometry>::SharedPtr odom_pub_;
     std::shared_ptr<tf2_ros::TransformBroadcaster> tf_broadcaster_;
     rclcpp::Publisher<sensor_msgs::msg::JointState>::SharedPtr joint_pub_;

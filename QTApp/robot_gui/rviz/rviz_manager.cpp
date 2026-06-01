@@ -2,6 +2,7 @@
 
 #include <rviz_common/render_panel.hpp>
 #include <rviz_common/visualization_manager.hpp>
+#include <rviz_common/tool_manager.hpp>
 #include <rviz_common/view_manager.hpp>
 #include <rviz_common/view_controller.hpp>
 #include <rviz_common/display.hpp>
@@ -48,7 +49,22 @@ void RVizManager::initializeRViz()
     /* Start update */
     manager_->startUpdate();
 
-    #if 1/* Layout */
+    // add mount click
+    manager_->getViewManager()->setCurrentViewControllerType(
+                "rviz_default_plugins/Orbit");
+
+    auto tool_manager = manager_->getToolManager();
+    tool_manager->setCurrentTool(tool_manager->addTool(
+            "rviz_default_plugins/Interact"));
+
+    // add tool 2D Pose Estimate and 2D Goal Pose
+    initial_pose_tool_ = manager_->getToolManager()->addTool(
+            "rviz_default_plugins/SetInitialPose");
+
+    goal_pose_tool_ = manager_->getToolManager()->addTool(
+            "rviz_default_plugins/SetGoal");
+
+    /* Layout */
     if(rviz_widget_->layout() == nullptr)
     {
         QVBoxLayout *layout = new QVBoxLayout(rviz_widget_);
@@ -61,7 +77,10 @@ void RVizManager::initializeRViz()
     {
         rviz_widget_->layout()->addWidget(render_panel_);
     }
-    #endif
+    render_panel_->setFocusPolicy(Qt::StrongFocus);
+    render_panel_->setMouseTracking(true);
+    render_panel_->setFocus();
+    render_panel_->installEventFilter(this);
 
     #if 1 /* Add Grid */
     auto grid = manager_->createDisplay(
@@ -76,7 +95,7 @@ void RVizManager::initializeRViz()
     tf_buffer_ = std::make_shared<tf2_ros::Buffer>(node_->get_clock());
     tf_listener_ = std::make_shared<tf2_ros::TransformListener>(*tf_buffer_);
 
-    manager_->setFixedFrame("map");
+    manager_->setFixedFrame("base_link");
     #endif
 
     #if 1 /* Add RobotModel display */
@@ -160,79 +179,39 @@ void RVizManager::zoomOut()
     }
 }
 
-void RVizManager::rotateLeft()
+//void RVizManager::rotateLeft()
+//{
+//    auto view = manager_->getViewManager()->getCurrent();
+
+//    if(view)
+//    {
+//        float yaw = view->subProp("Yaw")->getValue().toFloat();
+//        yaw -= 0.1;
+
+//        view->subProp("Yaw")->setValue(yaw);
+//    }
+//}
+
+void RVizManager::topView()
 {
     auto view = manager_->getViewManager()->getCurrent();
 
-    if(view)
-    {
-        float yaw = view->subProp("Yaw")->getValue().toFloat();
-        yaw -= 0.1;
+    if(view) {
+        /* Reset camera distance */
+        view->subProp("Distance")->setValue(15.0);
 
-        view->subProp("Yaw")->setValue(yaw);
+        /* Reset yaw */
+        view->subProp("Yaw")->setValue(0.0);
+
+        /* Reset pitch */
+        view->subProp("Pitch")->setValue(1.57);
+
+        /* Reset focal point */
+        view->subProp("Focal Point")->setValue("0; 0; 0");
+
+        /* Force update */
+        manager_->queueRender();
     }
-}
-
-void RVizManager::rotateRight()
-{
-    auto view = manager_->getViewManager()->getCurrent();
-
-    if(view)
-    {
-        float yaw = view->subProp("Yaw")->getValue().toFloat();
-        yaw += 0.1;
-
-        view->subProp("Yaw")->setValue(yaw);
-    }
-}
-
-void RVizManager::rotateUp()
-{
-    auto view = manager_->getViewManager()->getCurrent();
-
-    if(view)
-    {
-        float pitch = view->subProp("Pitch")->getValue().toFloat();
-        pitch -= 0.1;
-
-        view->subProp("Pitch")->setValue(pitch);
-    }
-}
-
-void RVizManager::rotateDown()
-{
-    auto view = manager_->getViewManager()->getCurrent();
-
-    if(view)
-    {
-        float pitch = view->subProp("Pitch")->getValue().toFloat();
-        pitch += 0.1;
-
-        view->subProp("Pitch")->setValue(pitch);
-    }
-}
-
-void RVizManager::resetView()
-{
-    auto view = manager_->getViewManager()->getCurrent();
-
-    if(!view)
-        return;
-
-    /* Reset camera distance */
-    view->subProp("Distance")->setValue(10.0);
-
-    /* Reset yaw */
-    view->subProp("Yaw")->setValue(0.0);
-
-    /* Reset pitch */
-    view->subProp("Pitch")->setValue(0.785);
-
-    /* Reset focal point */
-    view->subProp("Focal Point")->setValue("0; 0; 0");
-
-    /* Force update */
-    manager_->queueRender();
 }
 
 QStringList RVizManager::getAllFrames()
@@ -331,6 +310,20 @@ void RVizManager::setMapTopic(QString topic)
     }
 }
 
+void RVizManager::setInitialPoseTool()
+{
+    auto tool_manager = manager_->getToolManager();
+
+    tool_manager->setCurrentTool(initial_pose_tool_);
+}
+
+void RVizManager::setGoalPoseTool()
+{
+    auto tool_manager = manager_->getToolManager();
+
+    tool_manager->setCurrentTool(goal_pose_tool_);
+}
+
 void RVizManager::stop()
 {
 }
@@ -338,21 +331,6 @@ void RVizManager::stop()
 void RVizManager::resetRViz()
 {
     manager_->removeAllDisplays();
-
-    #if 1/* Layout */
-    if(rviz_widget_->layout() == nullptr)
-    {
-        QVBoxLayout *layout = new QVBoxLayout(rviz_widget_);
-
-        layout->setContentsMargins(0,0,0,0);
-
-        layout->addWidget(render_panel_);
-    }
-    else
-    {
-        rviz_widget_->layout()->addWidget(render_panel_);
-    }
-    #endif
 
     #if 1 /* Add Grid */
     auto grid = manager_->createDisplay(
@@ -367,7 +345,7 @@ void RVizManager::resetRViz()
     tf_buffer_ = std::make_shared<tf2_ros::Buffer>(node_->get_clock());
     tf_listener_ = std::make_shared<tf2_ros::TransformListener>(*tf_buffer_);
 
-    manager_->setFixedFrame("map");
+    manager_->setFixedFrame("base_link");
     #endif
 
     #if 1 /* Add RobotModel display */
