@@ -145,7 +145,8 @@ install(TARGETS
 # Install Python executables
 install(
   PROGRAMS
-    # scripts/path_planner.py
+    scripts/load_map.py
+    scripts/AStar_Navigation.py
   DESTINATION lib/${PROJECT_NAME}
 )
 
@@ -155,7 +156,6 @@ install(DIRECTORY
   launch
   rviz
   maps
-  scripts
   DESTINATION share/${PROJECT_NAME}
 )
 
