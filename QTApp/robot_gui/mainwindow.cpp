@@ -71,7 +71,8 @@ MainWindow::MainWindow(QApplication *app, QWidget *parent)
     connect(ui->btn_2DGoal, &QPushButton::clicked, rviz, &RVizManager::setGoalPoseTool);
     #endif
 
-    #if 1 /* ================================= Load Robot Model ================================= */
+    /* ================================= Load Robot Model ================================= */
+    #if 1
     robot = new RobotManager(this);
     connect(robot, &RobotManager::newLog, this, [=](QString text)
     {
@@ -118,6 +119,7 @@ MainWindow::MainWindow(QApplication *app, QWidget *parent)
     #if 1
     /* slider */
     connect(ui->Slider_Lin, &QSlider::valueChanged, this, &MainWindow::updateSpeedDisplay);
+    connect(ui->btn_RSTPose, &QPushButton::clicked, this, &MainWindow::resetPose);
 
     /* btn control robot */
     connect(ui->btnForward, &QPushButton::pressed, this, &MainWindow::moveForward);
@@ -279,6 +281,13 @@ void MainWindow::updateOdometry()
     joint_msg.position.push_back(right_wheel_angle);
 
     joint_pub_->publish(joint_msg);
+}
+
+void MainWindow::resetPose()
+{
+    x = 0.0;
+    y = 0.0;
+    theta = 0.0;
 }
 
 void MainWindow::updateSpeedDisplay()

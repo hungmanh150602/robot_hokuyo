@@ -119,39 +119,28 @@ void SlamManager::checkUseSimTime(bool checked)
 
 void SlamManager::loadMap()
 {
-    QString file_path = QFileDialog::getOpenFileName(
-                parent_widget_,
-                "Load Map",
-                QDir::homePath(),
-                "YAML Files (*.yaml)");
+    QString command =
+            src_ros + " && "
+            + src_ws + " && "
+            "ros2 run nav2_map_server map_server"
+            " --ros-args "
+            " -p yaml_filename:=" + map_fileName;
 
-        if(file_path.isEmpty())
-        {
-            return;
-        }
+    if(use_sim_time_) {
+        command += " -p use_sim_time:=true";
+    }
+    else {
+        command += " -p use_sim_time:=false";
+    }
 
-        QString command =
-                src_ros + " && "
-                + src_ws + " && "
-                "ros2 run nav2_map_server map_server"
-                " --ros-args "
-                " -p yaml_filename:=" + file_path;
+    QStringList arguments;
 
-        if(use_sim_time_) {
-            command += " -p use_sim_time:=true";
-        }
-        else {
-            command += " -p use_sim_time:=false";
-        }
+    arguments << "-c" << command;
 
-        QStringList arguments;
+    load_map_process_->start("bash", arguments);
 
-        arguments << "-c" << command;
-
-        load_map_process_->start("bash", arguments);
-
-        // wait 3s then config
-        QTimer::singleShot(
+    // wait 3s then config
+    QTimer::singleShot(
             3000,
             parent_widget_,
             [=]()
@@ -159,16 +148,16 @@ void SlamManager::loadMap()
             QString command =
                     src_ros + " && "
                     + src_ws + " && "
-                    + "ros2 lifecycle set /map_server configure";
-            command += " && sleep 3 && ";
-            command += "ros2 lifecycle set /map_server activate";
+                    "ros2 lifecycle set /map_server configure"
+                    " && sleep 3 && "
+                    "ros2 lifecycle set /map_server activate";
 
             QStringList arguments;
 
             arguments << "-c" << command;
 
             configure_active_process_->start("bash", arguments);
-        });
+    });
 }
 
 void SlamManager::amcl_run()
@@ -186,10 +175,10 @@ void SlamManager::amcl_run()
         command += "-p use_sim_time:=false";
     }
 
-    command += " -p transform_tolerance:=2.0";
-    command += " -p base_frame_id:=base_footprint";
-    command += " -p odom_frame_id:=odom";
-    command += " -p map_frame_id:=map";
+    command += " -p transform_tolerance:=2.0"
+               " -p base_frame_id:=base_footprint"
+               " -p odom_frame_id:=odom"
+               " -p map_frame_id:=map";
 
     QStringList arguments;
 
@@ -206,9 +195,9 @@ void SlamManager::amcl_run()
         QString command =
                 src_ros + " && "
                 + src_ws + " && "
-                + "ros2 lifecycle set /amcl configure";
-        command += " && sleep 3 && ";
-        command += "ros2 lifecycle set /amcl activate";
+                "ros2 lifecycle set /amcl configure"
+                " && sleep 3 && "
+                "ros2 lifecycle set /amcl activate";
 
         QStringList arguments;
 
@@ -220,17 +209,6 @@ void SlamManager::amcl_run()
 
 void SlamManager::nav2_run()
 {
-    QString file_path = QFileDialog::getOpenFileName(
-                parent_widget_,
-                "Load NAV2",
-                QDir::homePath(),
-                "YAML Files (*.yaml)");
-
-    if(file_path.isEmpty())
-    {
-        return;
-    }
-
     QString command =
             src_ros + " && "
             + src_ws + " && "
@@ -243,13 +221,13 @@ void SlamManager::nav2_run()
         command += " use_sim_time:=false";
     }
 
-    command += " params_file:=" + file_path;
+    command += " params_file:=" + nav2_fileName;
 
     QStringList arguments;
 
     arguments << "-c" << command;
 
-    amcl_process_->start("bash", arguments);
+    nav2_process_->start("bash", arguments);
 }
 
 void SlamManager::stop()
@@ -300,7 +278,7 @@ void SlamManager::stop()
         "pkill",
         QStringList()
             << "-f"
-            << "/amcl");
+            << "amcl");
 
     if(nav2_process_->state() != QProcess::NotRunning)
     {

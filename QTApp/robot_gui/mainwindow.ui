@@ -862,6 +862,19 @@
      </item>
     </layout>
    </widget>
+   <widget class="QPushButton" name="btn_RSTPose">
+    <property name="geometry">
+     <rect>
+      <x>610</x>
+      <y>80</y>
+      <width>81</width>
+      <height>41</height>
+     </rect>
+    </property>
+    <property name="text">
+     <string>RST Pose</string>
+    </property>
+   </widget>
   </widget>
   <widget class="QMenuBar" name="menubar">
    <property name="geometry">

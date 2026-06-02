@@ -49,6 +49,7 @@ private slots:
     void updateSpeedDisplay();
     void CmdVelCallback(const geometry_msgs::msg::Twist::SharedPtr msg);
     void updateOdometry();
+    void resetPose();
 
     void updateFrameList();
     void updateLaserTopics();

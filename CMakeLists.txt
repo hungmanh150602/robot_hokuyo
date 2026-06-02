@@ -146,6 +146,7 @@ install(TARGETS
 install(
   PROGRAMS
     scripts/load_map.py
+    scripts/a_star.py
     scripts/AStar_Navigation.py
   DESTINATION lib/${PROJECT_NAME}
 )

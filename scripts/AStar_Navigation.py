@@ -6,23 +6,34 @@ import matplotlib.pyplot as plt
 from rclpy.node import Node
 
 from load_map import load_map
+from a_star import AStar
 
 class Planner(Node):
     def __init__(self):
         super().__init__('Planner')
 
-        # -------------------------------
         # Load map + robot state
-        # -------------------------------
-        self.map_array, self.resolution, self.origin = load_map(
-            "/home/hungubuntu/ros2_workspace/src/robot_hokuyo/maps/my_map_save.yaml"
+        self.grid_size = 0.3
+
+        self.map_array, self.grid_map, self.resolution, self.origin = load_map(
+            "/home/hungubuntu/ros2_workspace/src/robot_hokuyo/maps/my_map_save.yaml",
+            self.grid_size
         )
 
-        self.cell_size = 0.3  # mét
+        # Goal (in world coordinates)
+        self.start_world = (0.0, 0.0)
+        self.goal_world = (3.5, 1.0)
+
+        # A* path planner
+        self.a_star = AStar(robot_radius=0.3, res=self.grid_size)
 
         self.display_map()
 
     def display_map(self):
+        start_pixel = (int((self.start_world[0] - self.origin[0]) / self.grid_size),
+                       int((self.start_world[1] - self.origin[1]) / self.grid_size))
+        goal_pixel = (int((self.goal_world[0] - self.origin[0]) / self.grid_size),
+                       int((self.goal_world[1] - self.origin[1]) / self.grid_size))
         # Kích thước map gốc
         height, width = self.map_array.shape
 
@@ -33,84 +44,111 @@ class Planner(Node):
         y_min = self.origin[1]
         y_max = self.origin[1] + height * self.resolution
 
-        # ==========================
-        # TẠO MAP MỚI 0.3m
-        # ==========================
-        map_width_m = width * self.resolution
-        map_height_m = height * self.resolution
+        # Kích thước map mới
+        height, width = self.grid_map.shape
 
-        new_cols = int(np.ceil(map_width_m / self.cell_size))
-        new_rows = int(np.ceil(map_height_m / self.cell_size))
+        # Tính tọa độ thực mới
+        x_grid_min = self.origin[0]
+        x_grid_max = self.origin[0] + width * self.grid_size
 
-        new_map = np.zeros((new_rows, new_cols))
+        y_grid_min = self.origin[1]
+        y_grid_max = self.origin[1] + height * self.grid_size
 
-        for r in range(new_rows):
-            for c in range(new_cols):
+        # Draw compare
+        fig, axes = plt.subplots(1, 2, figsize=(16, 8))
 
-                x0 = c * self.cell_size
-                x1 = min((c + 1) * self.cell_size, map_width_m)
-
-                y0 = r * self.cell_size
-                y1 = min((r + 1) * self.cell_size, map_height_m)
-
-                # Chuyển sang pixel của map gốc
-                px0 = int(x0 / self.resolution)
-                px1 = int(x1 / self.resolution)
-
-                py0 = int(y0 / self.resolution)
-                py1 = int(y1 / self.resolution)
-
-                block = self.map_array[py0:py1, px0:px1]
-
-                if block.size > 0:
-                    # Nếu có vật cản thì ô mới là vật cản
-                    if np.any(block < 100):
-                        new_map[r, c] = 1
-
-        # ==========================
-        # VẼ
-        # ==========================
-        fig, axs = plt.subplots(1, 2, figsize=(16, 8))
-
-        # Map gốc
-        axs[0].imshow(
+        # ============================================== Original map ==============================================
+        axes[0].imshow(
             self.map_array,
-            cmap='gray',
-            origin='lower',
+            cmap="gray",
+            origin="lower",
             extent=[x_min, x_max, y_min, y_max]
         )
 
-        axs[0].set_title("Original Map")
-        axs[0].set_xlabel("X (m)")
-        axs[0].set_ylabel("Y (m)")
-        axs[0].grid(True)
+        # Vẽ điểm start
+        axes[0].scatter(
+            self.start_world[0],
+            self.start_world[1],
+            s=100,
+            c='green',
+            marker='o',
+            label='Start'
+        )
 
-        # Map 0.3m
-        axs[1].imshow(
-            new_map,
+        # Vẽ điểm goal
+        axes[0].scatter(
+            self.goal_world[0],
+            self.goal_world[1],
+            s=100,
+            c='red',
+            marker='o',
+            label='Goal'
+        )
+
+        axes[0].set_title("Original Map")
+        axes[0].set_xlabel("X (m)")
+        axes[0].set_ylabel("Y (m)")
+        axes[0].grid(color='blue', linewidth=0.5)
+        axes[0].legend()
+
+        # ============================================== Map 0.3m ==============================================
+        axes[1].imshow(
+            self.grid_map,
             cmap='gray_r',
             origin='lower',
-            extent=[x_min, x_max, y_min, y_max]
+            extent=[x_grid_min, x_grid_max, y_grid_min, y_grid_max]
         )
 
-        axs[1].set_title("0.3m Grid Map")
-        axs[1].set_xlabel("X (m)")
-        axs[1].set_ylabel("Y (m)")
+        # Vẽ điểm start
+        axes[1].scatter(
+            start_pixel[0],
+            start_pixel[1],
+            s=100,
+            c='green',
+            marker='o',
+            label='Start'
+        )
 
-        # Vẽ lưới 0.3m
-        for x in np.arange(x_min, x_max, self.cell_size):
-            axs[1].axvline(x, color='blue', linewidth=0.5)
+        # Vẽ điểm goal
+        axes[1].scatter(
+            goal_pixel[0],
+            goal_pixel[1],
+            s=100,
+            c='red',
+            marker='o',
+            label='Goal'
+        )
 
-        for y in np.arange(y_min, y_max, self.cell_size):
-            axs[1].axhline(y, color='blue', linewidth=0.5)
+        axes[1].set_title("0.3m Grid Map")
+        axes[1].set_xlabel("X (m)")
+        axes[1].set_ylabel("Y (m)")
+        axes[1].grid(color='blue', linewidth=0.5)
+        axes[1].legend()
+
+        # VẼ LƯỚI Ô
+
+        # Tick theo kích thước cell
+        x_ticks = np.arange(x_grid_min, x_grid_max + self.grid_size, self.grid_size)
+        y_ticks = np.arange(y_grid_min, y_grid_max + self.grid_size, self.grid_size)
+
+        axes[1].set_xticks(x_ticks)
+        axes[1].set_yticks(y_ticks)
+
+        # Vẽ grid
+        axes[1].grid(
+            which='both',
+            color='blue',
+            linewidth=0.5
+        )
+
+        # Giữ tỉ lệ vuông
+        axes[1].set_aspect('equal')
 
         plt.tight_layout()
         plt.show()
 
 
-# --------------------------------------------------------------------
 # Entry point
-# --------------------------------------------------------------------
 def main():
     rclpy.init()
     planner = Planner()
