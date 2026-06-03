@@ -36,11 +36,11 @@ def load_map(yaml_file, grid_size = 0.3):
     if len(map_array.shape) == 3:
         map_array = map_array[:, :, 0]
 
-    map_array = np.flipud(map_array)
+    # map_array = np.flipud(map_array)
 #======================================================================================================================================================#
 #======================================================================================================================================================#
     # Convert occupancy
-    cell_pixels = int(grid_size / resolution)
+    cell_pixels = round(grid_size / resolution)
 
     grid_map = np.zeros_like(map_array)
 

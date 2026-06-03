@@ -68,8 +68,8 @@ class AStar:
                     continue
                 if closed[nx, ny]:
                     continue
-                if self.is_collision(grid, nx, ny, self.robot_radius, self.res):
-                    continue
+                # if self.is_collision(grid, nx, ny, self.robot_radius, self.res):
+                #     continue
 
                 cost = g[x, y] + math.hypot(dx, dy)
                 if cost < g[nx, ny]:
@@ -118,8 +118,8 @@ class AStar:
             x = int(round(p[0]))
             y = int(round(p[1]))
 
-            if self.is_collision(grid, x, y, self.robot_radius, self.res):
-                return False
+            # if self.is_collision(grid, x, y, self.robot_radius, self.res):
+            #     return False
 
         return True
 
