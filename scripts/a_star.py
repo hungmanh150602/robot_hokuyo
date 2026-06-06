@@ -4,16 +4,16 @@ import math
 
 
 class AStar:
-    def __init__(self, robot_radius=1.0, res=0.5):
-        self.robot_radius = robot_radius   # mét
-        self.res = res                     # mét/pixel
+    def __init__(self, robot_radius=0.5, res=0.5):
+        self.robot_radius = robot_radius  # mét
+        self.res = res  # mét/pixel
 
     def is_collision(self, grid, x, y, robot_radius, res):
         """
         Kiểm tra robot đặt tại pixel (x, y) có chạm vật cản không,
         dựa trên bán kính robot radius (m).
         """
-        r_pix = int(robot_radius / res)
+        r_pix = int(np.ceil(robot_radius / res))
         h, w = grid.shape
 
         for dx in range(-r_pix, r_pix + 1):
@@ -23,11 +23,11 @@ class AStar:
                     ny = y + dy
 
                     # ra ngoài map => va chạm
-                    if not (0 <= nx < h and 0 <= ny < w):
+                    if not (0 <= nx < w and 0 <= ny < h):
                         return True
 
-                    # 0 = obstacle
-                    if grid[nx][ny] == 1:
+                    # 1 = obstacle
+                    if grid[ny, nx]:
                         return True
 
         return False
@@ -38,54 +38,93 @@ class AStar:
     def astar(self, grid, start, goal):
         h, w = grid.shape
 
+        sx, sy = start
+        gx, gy = goal
+
         g = np.full((h, w), np.inf)
-        g[start] = 0
+        g[sy, sx] = 0
 
         closed = np.zeros((h, w), dtype=bool)
+
         parent = {}
 
         pq = [(0, start)]
 
         dirs = [(-1, 0), (1, 0), (0, -1), (0, 1),
-                (-1, -1), (-1, 1), (1, -1), (1, 1)]
+                (-1, -1), (-1, 1), (1, -1), (1, 1)
+        ]
 
         while pq:
+
             _, (x, y) = heapq.heappop(pq)
 
-            if closed[x, y]:
+            if closed[y, x]:
                 continue
-            closed[x, y] = True
+
+            closed[y, x] = True
 
             if (x, y) == goal:
                 return self.reconstruct_path(parent, goal)
 
             for dx, dy in dirs:
-                nx, ny = x + dx, y + dy
 
-                if not (0 <= nx < h and 0 <= ny < w):
-                    continue
-                if grid[nx, ny]:
-                    continue
-                if closed[nx, ny]:
-                    continue
-                # if self.is_collision(grid, nx, ny, self.robot_radius, self.res):
-                #     continue
+                nx = x + dx
+                ny = y + dy
 
-                cost = g[x, y] + math.hypot(dx, dy)
-                if cost < g[nx, ny]:
-                    g[nx, ny] = cost
+                # boundary
+                if not (0 <= nx < w and 0 <= ny < h):
+                    continue
+
+                # obstacle
+                if grid[ny, nx]:
+                    continue
+
+                # closed
+                if closed[ny, nx]:
+                    continue
+
+                # collision
+                if self.is_collision(
+                        grid,
+                        nx,
+                        ny,
+                        self.robot_radius,
+                        self.res):
+                    continue
+
+                # anti corner-cutting
+                if dx != 0 and dy != 0:
+
+                    if grid[y, nx]:
+                        continue
+
+                    if grid[ny, x]:
+                        continue
+
+                cost = g[y, x] + math.hypot(dx, dy)
+
+                if cost < g[ny, nx]:
+                    g[ny, nx] = cost
+
                     parent[(nx, ny)] = (x, y)
-                    f = cost + self.euclid((nx, ny), goal)
-                    heapq.heappush(pq, (f, (nx, ny)))
+
+                    f = cost + self.euclid(
+                        (nx, ny),
+                        goal
+                    )
+
+                    heapq.heappush(
+                        pq,
+                        (f, (nx, ny))
+                    )
 
         return None
-
     # ============================================
     # Heuristic
     # ============================================
     @staticmethod
     def euclid(a, b):
-        return math.sqrt((a[0] - b[0])**2 + (a[1] - b[1])**2)
+        return math.sqrt((a[0] - b[0]) ** 2 + (a[1] - b[1]) ** 2)
 
     # ============================================
     # Reconstruct A* path
@@ -109,7 +148,7 @@ class AStar:
         p2 = np.array(p2)
 
         dist = np.linalg.norm(p2 - p1)
-        n = int(dist / step)
+        n = max(int(dist / step), 1)
 
         for i in range(n + 1):
             t = i / max(n, 1)
@@ -118,14 +157,28 @@ class AStar:
             x = int(round(p[0]))
             y = int(round(p[1]))
 
-            # if self.is_collision(grid, x, y, self.robot_radius, self.res):
-            #     return False
+            if self.is_collision(grid, x, y, self.robot_radius, self.res):
+                return False
 
         return True
 
+    def are_collinear(self, A, B, C, eps=1e-6):
+        """
+        Kiểm tra 3 điểm A, B, C có thẳng hàng không
+        Dựa trên diện tích tam giác = 0
+        """
+        A = np.array(A)
+        B = np.array(B)
+        C = np.array(C)
+
+        area = np.abs(np.cross(B - A, C - A))
+        return area < eps
+
     def prune_path_3points_collision(self, grid, path):
         """
-        Loại bỏ điểm giữa nếu đoạn nối 2 đầu không va chạm
+        Loại bỏ điểm B chỉ khi:
+        - A, B, C KHÔNG thẳng hàng
+        - Đoạn AC không va chạm
         """
         if len(path) < 3:
             return path
@@ -138,19 +191,23 @@ class AStar:
             B = path[i]
             C = path[i + 1]
 
-            # Nếu tạo tam giác nhưng AC không va chạm → bỏ B
-            if self.is_line_collision_free(grid, A, C, step=self.res / 2):
+            # ---- KIỂM TRA THẲNG HÀNG ----
+            collinear = self.are_collinear(A, B, C)
+
+            # ---- PRUNE CHỈ KHI KHÔNG THẲNG HÀNG + KHÔNG VA CHẠM ----
+            if (not collinear) and self.is_line_collision_free(
+                    grid, A, C, step=self.res / 2):
                 i += 1
                 continue
 
-            # Nếu không bỏ được → giữ B
+            # ---- GIỮ B ----
             pruned.append(B)
             i += 1
 
         pruned.append(path[-1])
         return pruned
 
-    def prune_path_until_converged(self, grid, path, max_iter=1):
+    def prune_path_until_converged(self, grid, path, max_iter=10):
         """
         Lặp prune 3-point + LOS cho đến khi path không còn thay đổi
         """
@@ -167,9 +224,6 @@ class AStar:
 
         return current
 
-    # ============================================
-    # Bézier using matrix form T * M * G
-    # ============================================
     def quadratic_bezier(self, P0, P1, P2, n=10):
         # B(t) = (1−t)^2.P0 + 2(1−t)t.P1 + t^2.P2
         t = np.linspace(0, 1, n)
@@ -182,10 +236,9 @@ class AStar:
             [1, 0, 0]
         ])
 
-        P = np.vstack((P0, P1, P2))
+        G = np.vstack((P0, P1, P2))
 
-        return T @ M @ P
-
+        return T @ M @ G
 
     def is_corner(self, p0, p1, p2, angle_thresh=10):
         v1 = (p0 - p1).astype(np.float64)
@@ -209,8 +262,8 @@ class AStar:
     # ============================================
     # Smooth A* path using overlapping cubic Bézier
     # ============================================
-    def smooth_path(self, path,
-                    n_points=30,
+    def smooth_path(self, path, grid,
+                    n_points=10,
                     angle_thresh=10):
         path = np.array(path)
         N = len(path)
@@ -237,12 +290,40 @@ class AStar:
             P2 = 0.5 * (p_curr + p_next)
 
             curve = self.quadratic_bezier(P0, P1, P2, n_points)
-
             smooth.extend(curve)
+
+            # kiểm tra va chạm
+            # safe = True
+            # for p in curve:
+            #     x = int(round(p[0]))
+            #     y = int(round(p[1]))
+            #     if is_collision(grid, x, y,
+            #                     self.robot_radius, self.res):
+            #         safe = False
+            #         break
+            # if safe:
+            #     smooth.extend(curve)
+            # else:
+            #     smooth.append(p_curr)
 
         smooth.append(path[-1])
 
-        return np.array(smooth)
+        # =========================
+        # Tính tangent
+        # =========================
+        smooth = np.array(smooth)
+        tangents = []
+
+        for i in range(len(smooth) - 1):
+            v = smooth[i + 1] - smooth[i]
+            n = np.linalg.norm(v)
+            if n > 1e-6:
+                v = v / n
+            tangents.append(v)
+
+        tangents.append(tangents[-1])
+
+        return smooth, np.array(tangents)
 
     # ============================================
     # Main API: A* + Optional smoothing
@@ -252,13 +333,13 @@ class AStar:
 
         if raw is None:
             print("Không tìm thấy đường đi!")
-            return None, None, None
+            return None, None, None, None
 
         # loại điểm dư
-        pruned = self.prune_path_until_converged(grid, raw)
+        pruned = self.prune_path_until_converged(grid, raw, 10)
 
         if smooth:
-            smooth_path = self.smooth_path(pruned, 10)
-            return raw, pruned, smooth_path
+            smooth_path, tangent_path = self.smooth_path(pruned, grid, 6, 10)
+            return raw, pruned, smooth_path, tangent_path
 
-        return raw, pruned, None
+        return raw, pruned, None, None

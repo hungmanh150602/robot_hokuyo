@@ -10,7 +10,7 @@ find_package(ament_cmake REQUIRED)
 # uncomment the following section in order to fill in
 # further dependencies manually.
 # find_package(<dependency> REQUIRED)
-find_package(Qt5 REQUIRED COMPONENTS Core Widgets Network)
+find_package(Qt5 REQUIRED COMPONENTS Core Widgets Gui Network)
 
 find_package(rclcpp REQUIRED)
 find_package(sensor_msgs REQUIRED)
@@ -18,6 +18,8 @@ find_package(nav_msgs REQUIRED)
 find_package(geometry_msgs REQUIRED)
 find_package(tf2 REQUIRED)
 find_package(tf2_ros REQUIRED)
+
+find_package(OpenCV REQUIRED)
 
 find_package(rviz_common REQUIRED)
 find_package(rviz_rendering REQUIRED)
@@ -29,6 +31,14 @@ set(CMAKE_AUTOUIC ON)
 set(CMAKE_AUTORCC ON)
 
 set(CMAKE_INCLUDE_CURRENT_DIR ON)
+
+# Find RealSense2
+find_library(REALSENSE2_LIB realsense2)
+find_path(REALSENSE2_INCLUDE librealsense2/rs.hpp)
+
+if(NOT REALSENSE2_LIB OR NOT REALSENSE2_INCLUDE)
+    message(FATAL_ERROR "RealSense2 not found. Please install librealsense2-dev")
+endif()
 
 # include
 include_directories(
@@ -69,10 +79,6 @@ add_executable(tcp_client
   src/tcp_client.cpp
 )
 
-target_link_libraries(tcp_client
-  m
-)
-
 ament_target_dependencies(tcp_client
   rclcpp
   geometry_msgs
@@ -95,6 +101,28 @@ ament_target_dependencies(fake_odom
 )
 #-----------------------------------------
 
+# build pose_camera------------------------
+add_executable(pose_camera
+  src/pose_camera.cpp)
+
+target_include_directories(pose_camera PRIVATE
+    ${REALSENSE2_INCLUDE}
+)
+
+target_link_libraries(pose_camera
+    ${REALSENSE2_LIB}
+    ${OpenCV_LIBS}
+)
+
+target_compile_features(pose_camera PUBLIC c_std_99 cxx_std_17)
+
+ament_target_dependencies(pose_camera
+  rclcpp
+  geometry_msgs
+  tf2_ros
+)
+#-----------------------------------------
+
 # build robot_gui------------------------
 add_executable(robot_gui
   QTApp/robot_gui/main.cpp
@@ -110,6 +138,7 @@ add_executable(robot_gui
 target_link_libraries(robot_gui
   Qt5::Core
   Qt5::Widgets
+  Qt5::Gui
   Qt5::Network
 
   rviz_common::rviz_common
@@ -134,6 +163,7 @@ ament_target_dependencies(robot_gui
 #-----------------------------------------
 
 install(TARGETS
+  pose_camera
   publish_lidar
   tcp_client
   fake_odom
@@ -147,6 +177,7 @@ install(
   PROGRAMS
     scripts/load_map.py
     scripts/a_star.py
+    scripts/path_follower.py
     scripts/AStar_Navigation.py
   DESTINATION lib/${PROJECT_NAME}
 )
