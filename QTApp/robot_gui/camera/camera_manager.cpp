@@ -1,7 +1,7 @@
-#include "lidar_manager.h"
+#include "camera_manager.h"
 #include "config_path.h"
 
-LidarManager::LidarManager(QObject *parent)
+Camera_Manager::Camera_Manager(QObject *parent)
     : QObject(parent)
 {
     process_ = new QProcess(this);
@@ -13,9 +13,9 @@ LidarManager::LidarManager(QObject *parent)
     });
 }
 
-void LidarManager::startLidar()
+void Camera_Manager::startCamera()
 {
-    if (process_->state() != QProcess::NotRunning)
+    if(process_->state() != QProcess::NotRunning)
     {
         return;
     }
@@ -25,7 +25,7 @@ void LidarManager::startLidar()
 
     arguments << "-c"
               << src_ros + " && "
-                 + src_ws + " && " + lidar_run;
+                 + src_ws + " && " + camera_run;
 
     process_->start(program, arguments);
 
@@ -35,7 +35,7 @@ void LidarManager::startLidar()
     }
 }
 
-void LidarManager::stopLidar()
+void Camera_Manager::stopCamera()
 {
     if(process_->state() != QProcess::NotRunning)
     {
@@ -51,5 +51,6 @@ void LidarManager::stopLidar()
         "pkill",
         QStringList()
             << "-f"
-            << "publish_lidar");
+            << "pose_camera");
 }
+

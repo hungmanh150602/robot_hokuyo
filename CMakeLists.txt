@@ -45,6 +45,7 @@ include_directories(
   include/lidar_hokuyo/c
   include/lidar_hokuyo/cpp
   QTApp/robot_gui
+  QTApp/robot_gui/camera
   QTApp/robot_gui/lidar
   QTApp/robot_gui/robot
   QTApp/robot_gui/ros
@@ -119,7 +120,7 @@ target_compile_features(pose_camera PUBLIC c_std_99 cxx_std_17)
 ament_target_dependencies(pose_camera
   rclcpp
   geometry_msgs
-  tf2_ros
+  nav_msgs
 )
 #-----------------------------------------
 
@@ -128,6 +129,7 @@ add_executable(robot_gui
   QTApp/robot_gui/main.cpp
   QTApp/robot_gui/mainwindow.cpp
   QTApp/robot_gui/mainwindow.ui
+  QTApp/robot_gui/camera/camera_manager.cpp
   QTApp/robot_gui/lidar/lidar_manager.cpp
   QTApp/robot_gui/robot/robot_manager.cpp
   QTApp/robot_gui/ros/ros_manager.cpp

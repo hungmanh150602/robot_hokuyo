@@ -6,7 +6,7 @@ MainWindow::MainWindow(QApplication *app, QWidget *parent)
 {
     ui->setupUi(this);
 
-    /* ================================= TCP Socket ================================= */
+    /* ================ TCP Socket ================ */
     #if 1
     socket = new QTcpSocket(this);
 
@@ -16,33 +16,43 @@ MainWindow::MainWindow(QApplication *app, QWidget *parent)
     connect(socket, &QTcpSocket::connected, this, [=](){ ui->label_statustcp->setText("Connected"); });
     connect(socket, &QTcpSocket::disconnected, this, [=](){ ui->label_statustcp->setText("DisConnected"); });
     #endif
+    /* =============================================================================== */
 
-    /* ================================= ROS timer ================================= */
+    /* ================ ROS timer ================ */
     #if 1
     ros_timer = new QTimer(this);
     connect(ros_timer, &QTimer::timeout, this, [=](){ rclcpp::spin_some(node_); });
     ros_timer->start(10); // 10 ms
     #endif
+    /* =============================================================================== */
 
-    /* ================================= Odometry,TF Publisher ================================= */
+    /* ================ Odometry,TF ================ */
     #if 1
-    odomTimer = new QTimer(this);
-    connect(odomTimer, &QTimer::timeout, this, &MainWindow::updateOdometry);
-    odomTimer->start(20); // 20 ms
-
     node_ = rclcpp::Node::make_shared("QT_Gui_Node");
 
     cmd_vel_sub_ = node_->create_subscription<geometry_msgs::msg::Twist>(
                 "/cmd_vel",
                 10,
-                std::bind(&MainWindow::CmdVelCallback,this, std::placeholders::_1));
-    odom_pub_ = node_->create_publisher<nav_msgs::msg::Odometry>("/odom", 10);
+                std::bind(&MainWindow::CmdVelCallback, this, std::placeholders::_1));
+
+//    odom_pub_ = node_->create_publisher<nav_msgs::msg::Odometry>("/odom", 10);
+
+    odom_sub_ = node_->create_subscription<nav_msgs::msg::Odometry>(
+                "/odom",
+                10,
+                std::bind(&MainWindow::odomCallback, this, std::placeholders::_1));
 
     tf_broadcaster_ = std::make_shared<tf2_ros::TransformBroadcaster>(node_);
-    joint_pub_ = node_->create_publisher<sensor_msgs::msg::JointState>("/joint_states", 10);
-    #endif
 
-    /* ================================= Rviz ================================= */
+    joint_pub_ = node_->create_publisher<sensor_msgs::msg::JointState>("/joint_states", 10);
+
+    stateTimer = new QTimer(this);
+    connect(stateTimer, &QTimer::timeout, this, &MainWindow::updateStateRobot);
+    stateTimer->start(10); // 10 ms
+    #endif
+    /* =============================================================================== */
+
+    /* ================ Rviz ================ */
     #if 1
     rviz = new RVizManager(app_, ui->rvizWidget, node_, this);
 
@@ -70,8 +80,9 @@ MainWindow::MainWindow(QApplication *app, QWidget *parent)
     // 2D Goal Pose
     connect(ui->btn_2DGoal, &QPushButton::clicked, rviz, &RVizManager::setGoalPoseTool);
     #endif
+    /* =============================================================================== */
 
-    /* ================================= Load Robot Model ================================= */
+    /* ================ Load Robot Model ================ */
     #if 1
     robot = new RobotManager(this);
     connect(robot, &RobotManager::newLog, this, [=](QString text)
@@ -81,8 +92,9 @@ MainWindow::MainWindow(QApplication *app, QWidget *parent)
 
     connect(ui->btn_LoadRobot, &QPushButton::clicked, robot, &RobotManager::loadRobotModel);
     #endif
+    /* =============================================================================== */
 
-    /* ================================= Connect lidar ================================= */
+    /* ================ Connect lidar ================ */
     #if 1
     lidar = new LidarManager(this);
 
@@ -91,12 +103,26 @@ MainWindow::MainWindow(QApplication *app, QWidget *parent)
         ui->textEdit_log->append(text);
     });
 
-    // button
     connect(ui->btnConnect_lidar, &QPushButton::clicked, lidar, &LidarManager::startLidar);
-    connect(ui->btnStop_lidar, &QPushButton::clicked, lidar, &LidarManager::stop);
+    connect(ui->btnStop_lidar, &QPushButton::clicked, lidar, &LidarManager::stopLidar);
     #endif
+    /* =============================================================================== */
 
-    /* ================================= Slam ToolBox ================================= */
+    /* ================ Connect camera ================ */
+    #if 1
+    camera = new Camera_Manager(this);
+
+    connect(camera, &Camera_Manager::newLog, this, [=](QString text)
+    {
+        ui->textEdit_log->append(text);
+    });
+
+    connect(ui->btn_StartCamera, &QPushButton::clicked, camera, &Camera_Manager::startCamera);
+    connect(ui->btn_StopCamera, &QPushButton::clicked, camera, &Camera_Manager::stopCamera);
+    #endif
+    /* =============================================================================== */
+
+    /* ================ Slam ToolBox ================ */
     #if 1
     slam = new SlamManager(this);
 
@@ -105,7 +131,6 @@ MainWindow::MainWindow(QApplication *app, QWidget *parent)
         ui->textEdit_log->append(text);
     });
 
-    // button
     connect(ui->btn_SlamToolBox, &QPushButton::clicked, slam, &SlamManager::SlamToolBox);
     connect(ui->btn_StopSlam, &QPushButton::clicked, slam, &SlamManager::stop);
     connect(ui->btn_SaveMap, &QPushButton::clicked, slam, &SlamManager::saveMap);
@@ -114,11 +139,11 @@ MainWindow::MainWindow(QApplication *app, QWidget *parent)
     connect(ui->btn_AMCL, &QPushButton::clicked, slam, &SlamManager::amcl_run);
     connect(ui->btn_NAV2, &QPushButton::clicked, slam, &SlamManager::nav2_run);
     #endif
+    /* =============================================================================== */
 
-    /* ================================= UI Button ================================= */
+    /* ================ UI Button ================ */
     #if 1
-    /* slider */
-    connect(ui->Slider_Lin, &QSlider::valueChanged, this, &MainWindow::updateSpeedDisplay);
+    /* btn rst pose */
     connect(ui->btn_RSTPose, &QPushButton::clicked, this, &MainWindow::resetPose);
 
     /* btn control robot */
@@ -134,6 +159,7 @@ MainWindow::MainWindow(QApplication *app, QWidget *parent)
     connect(ui->btnRight, &QPushButton::released, this, &MainWindow::stopRobot);
     connect(ui->btnStop, &QPushButton::released, this, &MainWindow::stopRobot);
     #endif
+    /* =============================================================================== */
 }
 
 MainWindow::~MainWindow()
@@ -145,7 +171,7 @@ MainWindow::~MainWindow()
 
     if(lidar)
     {
-        lidar->stop();
+        lidar->stopLidar();
     }
 
     if(robot)
@@ -195,8 +221,7 @@ void MainWindow::disconnectToESP32()
     }
 }
 
-void MainWindow::CmdVelCallback(
-    const geometry_msgs::msg::Twist::SharedPtr msg)
+void MainWindow::CmdVelCallback(const geometry_msgs::msg::Twist::SharedPtr msg)
 {
     linear_velocity = msg->linear.x;
     angular_velocity = msg->angular.z;
@@ -213,17 +238,52 @@ void MainWindow::CmdVelCallback(
     }
 }
 
-void MainWindow::updateOdometry()
+void MainWindow::odomCallback(const nav_msgs::msg::Odometry::SharedPtr msg)
 {
-    double dt = 0.02;
+    x = msg->pose.pose.position.x;
 
-    x += linear_velocity * cos(theta) * dt;
-    y += linear_velocity * sin(theta) * dt;
-    theta += angular_velocity * dt;
+    y = msg->pose.pose.position.y;
+
+    tf2::Quaternion q(
+        msg->pose.pose.orientation.x,
+        msg->pose.pose.orientation.y,
+        msg->pose.pose.orientation.z,
+        msg->pose.pose.orientation.w);
+
+    double roll, pitch, yaw;
+
+    tf2::Matrix3x3(q).getRPY(
+                roll,
+                pitch,
+                yaw);
+
+    theta = yaw;
+}
+
+void MainWindow::resetPose()
+{
+    x = 0.0;
+    y = 0.0;
+    theta = 0.0;
+}
+
+void MainWindow::updateStateRobot()
+{
+    int Lin_vel = ui->Slider_Lin->value();
+
+    ui->lineEdit_Lin->setText(QString::number(Lin_vel));
 
     ui->lineEditX->setText(QString::number(x, 'f', 2));
     ui->lineEditY->setText(QString::number(y, 'f', 2));
     ui->lineEditTheta->setText(QString::number(theta, 'f', 2));
+
+    double dt = 0.02;
+
+    #if 0
+    x += linear_velocity * cos(theta) * dt;
+    y += linear_velocity * sin(theta) * dt;
+    theta += angular_velocity * dt;
+    #endif
 
     left_wheel_angle += left_omega * dt;
     right_wheel_angle += right_omega * dt;
@@ -250,26 +310,6 @@ void MainWindow::updateOdometry()
 
     tf_broadcaster_->sendTransform(t);
 
-    /* Odom */
-    nav_msgs::msg::Odometry odom;
-
-    odom.header.stamp = node_->now();
-    odom.header.frame_id = "odom";
-    odom.child_frame_id = "base_footprint";
-
-    odom.pose.pose.position.x = x;
-    odom.pose.pose.position.y = y;
-
-    odom.pose.pose.orientation.x = q.x();
-    odom.pose.pose.orientation.y = q.y();
-    odom.pose.pose.orientation.z = q.z();
-    odom.pose.pose.orientation.w = q.w();
-
-    odom.twist.twist.linear.x = linear_velocity;
-    odom.twist.twist.angular.z = angular_velocity;
-
-    odom_pub_->publish(odom);
-
     /* joint_states */
     sensor_msgs::msg::JointState joint_msg;
 
@@ -281,20 +321,6 @@ void MainWindow::updateOdometry()
     joint_msg.position.push_back(right_wheel_angle);
 
     joint_pub_->publish(joint_msg);
-}
-
-void MainWindow::resetPose()
-{
-    x = 0.0;
-    y = 0.0;
-    theta = 0.0;
-}
-
-void MainWindow::updateSpeedDisplay()
-{
-    int Lin_vel = ui->Slider_Lin->value();
-
-    ui->lineEdit_Lin->setText(QString::number(Lin_vel));
 }
 
 void MainWindow::updateFrameList()

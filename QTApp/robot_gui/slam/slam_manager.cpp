@@ -70,7 +70,7 @@ void SlamManager::SlamToolBox()
     arguments << "-c"
               << src_ros + " && "
                  + src_ws + " && "
-                 "ros2 launch slam_toolbox online_async_launch.py";
+                 "ros2 launch slam_toolbox online_async_launch.py slam_params_file:=" + slam_fileName;
 
     slam_process_->start(program, arguments);
 

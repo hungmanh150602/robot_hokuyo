@@ -23,7 +23,9 @@
 #include <tf2_ros/transform_broadcaster.h>
 #include <tf2/LinearMath/Quaternion.h>
 
+
 #include "lidar/lidar_manager.h"
+#include "camera_manager.h"
 #include "rviz/rviz_manager.h"
 #include "slam/slam_manager.h"
 #include "robot/robot_manager.h"
@@ -46,9 +48,9 @@ private slots:
     void connectToESP32();
     void disconnectToESP32();
 
-    void updateSpeedDisplay();
+    void updateStateRobot();
     void CmdVelCallback(const geometry_msgs::msg::Twist::SharedPtr msg);
-    void updateOdometry();
+    void odomCallback(const nav_msgs::msg::Odometry::SharedPtr msg);
     void resetPose();
 
     void updateFrameList();
@@ -67,17 +69,19 @@ private:
 
     QTcpSocket *socket;
 
-    QTimer *odomTimer;
+    QTimer *stateTimer;
     QTimer *ros_timer;
 
     LidarManager *lidar;
+    Camera_Manager *camera;
     RVizManager *rviz;
     SlamManager *slam;
     RobotManager *robot;
 
     rclcpp::Node::SharedPtr node_;
     rclcpp::Subscription<geometry_msgs::msg::Twist>::SharedPtr cmd_vel_sub_;
-    rclcpp::Publisher<nav_msgs::msg::Odometry>::SharedPtr odom_pub_;
+//    rclcpp::Publisher<nav_msgs::msg::Odometry>::SharedPtr odom_pub_;
+    rclcpp::Subscription<nav_msgs::msg::Odometry>::SharedPtr odom_sub_;
     std::shared_ptr<tf2_ros::TransformBroadcaster> tf_broadcaster_;
     rclcpp::Publisher<sensor_msgs::msg::JointState>::SharedPtr joint_pub_;
 

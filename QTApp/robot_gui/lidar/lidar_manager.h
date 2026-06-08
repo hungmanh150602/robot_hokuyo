@@ -12,7 +12,7 @@ public:
     explicit LidarManager(QObject *parent = nullptr);
 
     void startLidar();
-    void stop();
+    void stopLidar();
 
 signals:
     void newLog(QString text);

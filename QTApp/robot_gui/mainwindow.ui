@@ -711,8 +711,17 @@
        </item>
        <item>
         <widget class="QLineEdit" name="lineEdit_Lin">
+         <property name="enabled">
+          <bool>true</bool>
+         </property>
+         <property name="layoutDirection">
+          <enum>Qt::LeftToRight</enum>
+         </property>
          <property name="text">
           <string>0</string>
+         </property>
+         <property name="alignment">
+          <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
          </property>
         </widget>
        </item>
@@ -816,20 +825,20 @@
      <rect>
       <x>10</x>
       <y>80</y>
-      <width>101</width>
+      <width>81</width>
       <height>41</height>
      </rect>
     </property>
     <property name="text">
-     <string>Connect Lidar</string>
+     <string>Start Lidar</string>
     </property>
    </widget>
    <widget class="QPushButton" name="btnStop_lidar">
     <property name="geometry">
      <rect>
-      <x>120</x>
+      <x>100</x>
       <y>80</y>
-      <width>101</width>
+      <width>81</width>
       <height>41</height>
      </rect>
     </property>
@@ -873,6 +882,32 @@
     </property>
     <property name="text">
      <string>RST Pose</string>
+    </property>
+   </widget>
+   <widget class="QPushButton" name="btn_StartCamera">
+    <property name="geometry">
+     <rect>
+      <x>190</x>
+      <y>80</y>
+      <width>91</width>
+      <height>41</height>
+     </rect>
+    </property>
+    <property name="text">
+     <string>Start Camera</string>
+    </property>
+   </widget>
+   <widget class="QPushButton" name="btn_StopCamera">
+    <property name="geometry">
+     <rect>
+      <x>290</x>
+      <y>80</y>
+      <width>91</width>
+      <height>41</height>
+     </rect>
+    </property>
+    <property name="text">
+     <string>Stop Camera</string>
     </property>
    </widget>
   </widget>
