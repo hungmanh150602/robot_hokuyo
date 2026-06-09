@@ -241,7 +241,6 @@ void MainWindow::CmdVelCallback(const geometry_msgs::msg::Twist::SharedPtr msg)
 void MainWindow::odomCallback(const nav_msgs::msg::Odometry::SharedPtr msg)
 {
     x = msg->pose.pose.position.x;
-
     y = msg->pose.pose.position.y;
 
     tf2::Quaternion q(
@@ -317,8 +316,8 @@ void MainWindow::updateStateRobot()
     joint_msg.name.push_back("left_joint");
     joint_msg.name.push_back("right_joint");
 
-    joint_msg.position.push_back(left_wheel_angle);
-    joint_msg.position.push_back(right_wheel_angle);
+    joint_msg.position.push_back(0);
+    joint_msg.position.push_back(0);
 
     joint_pub_->publish(joint_msg);
 }
