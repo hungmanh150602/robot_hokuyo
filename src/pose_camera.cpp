@@ -16,7 +16,8 @@ public:
 
         // tìm camera
         std::string serial;
-        if (!find_device_with_pose_stream(serial)) {
+        if (!find_device_with_pose_stream(serial))
+        {
             RCLCPP_ERROR(this->get_logger(), "No RealSense device with pose stream found!");
             rclcpp::shutdown();
             return;
@@ -38,16 +39,19 @@ public:
         // Timer publish /odom
         timer_ = this->create_wall_timer(
             std::chrono::milliseconds(50),
-            std::bind(&PoseOdomPublisher::publish_odom, this)
-        );
+            std::bind(&PoseOdomPublisher::publish_odom, this));
     }
 
     ~PoseOdomPublisher()
     {
-        if (pipe_running_) {
-            try {
+        if (pipe_running_)
+        {
+            try
+            {
                 pipe_.stop();
-            } catch (const std::exception& e) {
+            }
+            catch (const std::exception &e)
+            {
                 RCLCPP_ERROR(this->get_logger(), "Error stopping pipeline: %s", e.what());
             }
         }
@@ -56,9 +60,14 @@ public:
 private:
     void publish_odom()
     {
-        try {
+        try
+        {
             // Get pose frames
-            auto frames = pipe_.wait_for_frames();
+            rs2::frameset frames;
+
+            if (!pipe_.poll_for_frames(&frames))
+                return;
+
             auto f = frames.first_or_default(RS2_STREAM_POSE);
 
             if (!f)
@@ -77,53 +86,92 @@ private:
             // Position
             odom_msg.pose.pose.position.x = -pose_data.translation.z;
             odom_msg.pose.pose.position.y = -pose_data.translation.x;
-            odom_msg.pose.pose.position.z =  pose_data.translation.y;
+            odom_msg.pose.pose.position.z = pose_data.translation.y;
 
             // Orientation
             odom_msg.pose.pose.orientation.x = -pose_data.rotation.z;
             odom_msg.pose.pose.orientation.y = -pose_data.rotation.x;
-            odom_msg.pose.pose.orientation.z =  pose_data.rotation.y;
-            odom_msg.pose.pose.orientation.w =  pose_data.rotation.w;
+            odom_msg.pose.pose.orientation.z = pose_data.rotation.y;
+            odom_msg.pose.pose.orientation.w = pose_data.rotation.w;
 
             // Linear velocity
             odom_msg.twist.twist.linear.x = -pose_data.velocity.z;
             odom_msg.twist.twist.linear.y = -pose_data.velocity.x;
-            odom_msg.twist.twist.linear.z =  pose_data.velocity.y;
+            odom_msg.twist.twist.linear.z = pose_data.velocity.y;
 
             // Angular velocity
             odom_msg.twist.twist.angular.x = -pose_data.angular_velocity.z;
             odom_msg.twist.twist.angular.y = -pose_data.angular_velocity.x;
-            odom_msg.twist.twist.angular.z =  pose_data.angular_velocity.y;
+            odom_msg.twist.twist.angular.z = pose_data.angular_velocity.y;
 
             // Publish /odom
             odom_pub_->publish(odom_msg);
-
-        } catch (const rs2::error & e) {
+        }
+        catch (const rs2::error &e)
+        {
             RCLCPP_ERROR(this->get_logger(), "RealSense error: %s", e.what());
-
-        } catch (const std::exception& e) {
+        }
+        catch (const std::exception &e)
+        {
             RCLCPP_ERROR(this->get_logger(), "Error: %s", e.what());
+        }
+        catch (const rs2::error &e)
+        {
+            RCLCPP_ERROR(this->get_logger(),
+                         "RealSense error: %s",
+                         e.what());
+
+            try
+            {
+                pipe_.stop();
+            }
+            catch (...)
+            {
+            }
+
+            std::this_thread::sleep_for(std::chrono::seconds(1));
+
+            try
+            {
+                rs2::config cfg;
+                cfg.enable_stream(RS2_STREAM_POSE, RS2_FORMAT_6DOF);
+
+                pipe_.start(cfg);
+
+                RCLCPP_INFO(this->get_logger(),
+                            "RealSense pipeline restarted");
+            }
+            catch (const std::exception &ex)
+            {
+
+                RCLCPP_ERROR(this->get_logger(),
+                             "Restart failed: %s",
+                             ex.what());
+            }
         }
     }
 
-    bool find_device_with_pose_stream(std::string& serial)
+    bool find_device_with_pose_stream(std::string &serial)
     {
         rs2::context ctx;
         auto devices = ctx.query_devices();
 
-        if (devices.size() == 0) {
+        if (devices.size() == 0)
+        {
             RCLCPP_ERROR(this->get_logger(), "No RealSense devices found!");
             return false;
         }
 
-        for (auto&& dev : devices) {
+        for (auto &&dev : devices)
+        {
 
             serial = dev.get_info(RS2_CAMERA_INFO_SERIAL_NUMBER);
 
             RCLCPP_INFO(this->get_logger(), "Found device: %s", serial.c_str());
 
             // Kiểm tra pose stream
-            try {
+            try
+            {
 
                 rs2::pipeline temp_pipe;
                 rs2::config temp_cfg;
@@ -132,15 +180,15 @@ private:
                 RCLCPP_INFO(this->get_logger(), "Device supports pose stream");
 
                 return true;
-
-            } catch (const rs2::error& e) {
+            }
+            catch (const rs2::error &e)
+            {
 
                 RCLCPP_WARN(
                     this->get_logger(),
                     "Device %s does not support pose stream: %s",
                     serial.c_str(),
-                    e.what()
-                );
+                    e.what());
 
                 continue;
             }
@@ -156,11 +204,13 @@ private:
     rclcpp::TimerBase::SharedPtr timer_;
 };
 
-int main(int argc, char* argv[])
+int main(int argc, char *argv[])
 {
     rclcpp::init(argc, argv);
     auto node = std::make_shared<PoseOdomPublisher>();
-    rclcpp::spin(node);
+    rclcpp::executors::MultiThreadedExecutor executor;
+    executor.add_node(node);
+    executor.spin();
     rclcpp::shutdown();
 
     return 0;

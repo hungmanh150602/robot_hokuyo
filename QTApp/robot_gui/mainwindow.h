@@ -91,9 +91,19 @@ private:
     double L = 0.25;
     double wheel_radius = 0.325;
 
-    double x = 0.0;
-    double y = 0.0;
-    double theta = 0.0;
+    int limit_angel_vel = 40;
+
+    double odom_x = 0.0;
+    double odom_y = 0.0;
+    double odom_theta = 0.0;
+
+    double prev_x = 0.0;
+    double prev_y = 0.0;
+    double prev_theta = 0.0;
+
+    double robot_x = 0.0;
+    double robot_y = 0.0;
+    double robot_theta = 0.0;
 
     double linear_velocity = 0.0;
     double angular_velocity = 0.0;

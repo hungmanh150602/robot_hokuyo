@@ -243,6 +243,11 @@ void MainWindow::CmdVelCallback(const geometry_msgs::msg::Twist::SharedPtr msg)
     int msg_vel_L = (vL - 0.00053) / 0.001915;
     int msg_vel_R = (vR - 0.00053) / 0.001915;
 
+    if(msg_vel_L > limit_angel_vel) msg_vel_L = limit_angel_vel;
+    if(msg_vel_L < -limit_angel_vel) msg_vel_L = -limit_angel_vel;
+    if(msg_vel_R > limit_angel_vel) msg_vel_R = limit_angel_vel;
+    if(msg_vel_R < -limit_angel_vel) msg_vel_R = -limit_angel_vel;
+
     if(socket->state() == QAbstractSocket::ConnectedState) {
         QString msg = QString("%1,%2\n").arg(-msg_vel_L).arg(msg_vel_R);
         socket->write(msg.toUtf8());
@@ -251,8 +256,8 @@ void MainWindow::CmdVelCallback(const geometry_msgs::msg::Twist::SharedPtr msg)
 
 void MainWindow::odomCallback(const nav_msgs::msg::Odometry::SharedPtr msg)
 {
-    x = msg->pose.pose.position.x;
-    y = msg->pose.pose.position.y;
+    odom_x = msg->pose.pose.position.x;
+    odom_y = msg->pose.pose.position.y;
 
     tf2::Quaternion q(
         msg->pose.pose.orientation.x,
@@ -267,7 +272,7 @@ void MainWindow::odomCallback(const nav_msgs::msg::Odometry::SharedPtr msg)
                 pitch,
                 yaw);
 
-    theta = yaw;
+    odom_theta = yaw;
 
     linear_velocity = msg->twist.twist.linear.x;
     angular_velocity = msg->twist.twist.angular.z;
@@ -275,32 +280,48 @@ void MainWindow::odomCallback(const nav_msgs::msg::Odometry::SharedPtr msg)
 
 void MainWindow::resetPose()
 {
-    x = 0.0;
-    y = 0.0;
-    theta = 0.0;
+    robot_x = 0.0;
+    robot_y = 0.0;
+    robot_theta = 0.0;
+
+    prev_x = 0.0;
+    prev_y = 0.0;
+    prev_theta = 0.0;
 }
 
 void MainWindow::updateStateRobot()
 {
+    if(!camera){
+        stopRobot();
+        prev_x = robot_x;
+        prev_y = robot_y;
+        prev_theta = robot_theta;
+        ui->textEdit_log->append("Camera lost");
+        return;
+    }
+
+    robot_x = odom_x + prev_x;
+    robot_y = odom_y + prev_y;
+    robot_theta = odom_theta + prev_theta;
+
     int Lin_vel = ui->Slider_Lin->value();
 
     ui->lineEdit_Lin->setText(QString::number(Lin_vel));
-
-    ui->lineEditX->setText(QString::number(x, 'f', 2));
-    ui->lineEditY->setText(QString::number(y, 'f', 2));
-    ui->lineEditTheta->setText(QString::number(theta, 'f', 2));
+    ui->lineEditX->setText(QString::number(robot_x, 'f', 2));
+    ui->lineEditY->setText(QString::number(robot_y, 'f', 2));
+    ui->lineEditTheta->setText(QString::number(robot_theta, 'f', 2));
 
     double dt = 0.02;
 
     #if 0
-    x += linear_velocity * cos(theta) * dt;
-    y += linear_velocity * sin(theta) * dt;
-    theta += angular_velocity * dt;
+    robot_x += linear_velocity * cos(theta) * dt;
+    robot_y += linear_velocity * sin(theta) * dt;
+    robot_theta += angular_velocity * dt;
     #endif
 
     /* Quaternion */
     tf2::Quaternion q;
-    q.setRPY(0, 0, theta);
+    q.setRPY(0, 0, robot_theta);
 
     /* TF */
     geometry_msgs::msg::TransformStamped t;
@@ -309,8 +330,8 @@ void MainWindow::updateStateRobot()
     t.header.frame_id = "odom";
     t.child_frame_id = "base_footprint";
 
-    t.transform.translation.x = x;
-    t.transform.translation.y = y;
+    t.transform.translation.x = robot_x;
+    t.transform.translation.y = robot_y;
     t.transform.translation.z = 0.0;
 
     t.transform.rotation.x = q.x();
