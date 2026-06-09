@@ -132,7 +132,6 @@ MainWindow::MainWindow(QApplication *app, QWidget *parent)
     });
 
     connect(ui->btn_SlamToolBox, &QPushButton::clicked, slam, &SlamManager::SlamToolBox);
-    connect(ui->btn_StopSlam, &QPushButton::clicked, slam, &SlamManager::stop);
     connect(ui->btn_SaveMap, &QPushButton::clicked, slam, &SlamManager::saveMap);
     connect(ui->checkBox_UseSimTime, &QCheckBox::toggled, slam, &SlamManager::checkUseSimTime);
     connect(ui->btn_LoadMap, &QPushButton::clicked, slam, &SlamManager::loadMap);
@@ -145,6 +144,8 @@ MainWindow::MainWindow(QApplication *app, QWidget *parent)
     #if 1
     /* btn rst pose */
     connect(ui->btn_RSTPose, &QPushButton::clicked, this, &MainWindow::resetPose);
+
+    connect(ui->btn_killall, &QPushButton::clicked, this, &MainWindow::killAll);
 
     /* btn control robot */
     connect(ui->btnForward, &QPushButton::pressed, this, &MainWindow::moveForward);
@@ -164,15 +165,7 @@ MainWindow::MainWindow(QApplication *app, QWidget *parent)
 
 MainWindow::~MainWindow()
 {
-    if(slam)
-    {
-        slam->stop();
-    }
-
-    if(lidar)
-    {
-        lidar->stopLidar();
-    }
+    killAll();
 
     if(robot)
     {
@@ -192,6 +185,24 @@ MainWindow::~MainWindow()
     rclcpp::shutdown();
 
     delete ui;
+}
+
+void MainWindow::killAll()
+{
+    if(slam)
+    {
+        slam->stop();
+    }
+
+    if(lidar)
+    {
+        lidar->stopLidar();
+    }
+
+    if(camera)
+    {
+        camera->stopCamera();
+    }
 }
 
 void MainWindow::connectToESP32()
@@ -257,6 +268,9 @@ void MainWindow::odomCallback(const nav_msgs::msg::Odometry::SharedPtr msg)
                 yaw);
 
     theta = yaw;
+
+    linear_velocity = msg->twist.twist.linear.x;
+    angular_velocity = msg->twist.twist.angular.z;
 }
 
 void MainWindow::resetPose()
@@ -284,9 +298,6 @@ void MainWindow::updateStateRobot()
     theta += angular_velocity * dt;
     #endif
 
-    left_wheel_angle += left_omega * dt;
-    right_wheel_angle += right_omega * dt;
-
     /* Quaternion */
     tf2::Quaternion q;
     q.setRPY(0, 0, theta);
@@ -312,12 +323,21 @@ void MainWindow::updateStateRobot()
     /* joint_states */
     sensor_msgs::msg::JointState joint_msg;
 
+    double vR = linear_velocity + L/2.0 * angular_velocity;
+    double vL = linear_velocity - L/2.0 * angular_velocity;
+
+    left_omega = vL / wheel_radius;
+    right_omega = vR / wheel_radius;
+
+    left_wheel_angle += left_omega * dt;
+    right_wheel_angle += right_omega * dt;
+
     joint_msg.header.stamp = node_->now();
     joint_msg.name.push_back("left_joint");
     joint_msg.name.push_back("right_joint");
 
-    joint_msg.position.push_back(0);
-    joint_msg.position.push_back(0);
+    joint_msg.position.push_back(left_wheel_angle);
+    joint_msg.position.push_back(right_wheel_angle);
 
     joint_pub_->publish(joint_msg);
 }

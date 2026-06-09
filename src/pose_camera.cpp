@@ -37,7 +37,7 @@ public:
 
         // Timer publish /odom
         timer_ = this->create_wall_timer(
-            std::chrono::milliseconds(20),
+            std::chrono::milliseconds(50),
             std::bind(&PoseOdomPublisher::publish_odom, this)
         );
     }

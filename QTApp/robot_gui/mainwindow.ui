@@ -514,19 +514,6 @@
        <string>Use Sim Time</string>
       </property>
      </widget>
-     <widget class="QPushButton" name="btn_StopSlam">
-      <property name="geometry">
-       <rect>
-        <x>100</x>
-        <y>250</y>
-        <width>111</width>
-        <height>31</height>
-       </rect>
-      </property>
-      <property name="text">
-       <string>Kill Slam/Map</string>
-      </property>
-     </widget>
      <widget class="QPushButton" name="btn_2DPose">
       <property name="geometry">
        <rect>
@@ -770,7 +757,7 @@
        <item>
         <widget class="QLineEdit" name="lineEdit_ip">
          <property name="text">
-          <string>192.168.0.105</string>
+          <string>192.168.0.100</string>
          </property>
         </widget>
        </item>
@@ -908,6 +895,19 @@
     </property>
     <property name="text">
      <string>Stop Camera</string>
+    </property>
+   </widget>
+   <widget class="QPushButton" name="btn_killall">
+    <property name="geometry">
+     <rect>
+      <x>520</x>
+      <y>80</y>
+      <width>81</width>
+      <height>41</height>
+     </rect>
+    </property>
+    <property name="text">
+     <string>Kill All</string>
     </property>
    </widget>
   </widget>

@@ -63,6 +63,8 @@ private slots:
     void moveRight();
     void stopRobot();
 
+    void killAll();
+
 private:
     Ui::MainWindow *ui;
     QApplication *app_;
