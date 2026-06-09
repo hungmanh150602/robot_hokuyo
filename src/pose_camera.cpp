@@ -1,6 +1,7 @@
 #include <librealsense2/rs.hpp>
 #include <rclcpp/rclcpp.hpp>
 #include <nav_msgs/msg/odometry.hpp>
+#include <std_msgs/msg/bool.hpp>
 
 #include <iostream>
 #include <iomanip>
@@ -13,6 +14,7 @@ public:
     {
         // Publisher /odom
         odom_pub_ = this->create_publisher<nav_msgs::msg::Odometry>("/odom", 10);
+        status_pub_ = this->create_publisher<std_msgs::msg::Bool>("/camera_status", 10);
 
         // tìm camera
         std::string serial;
@@ -58,6 +60,14 @@ public:
     }
 
 private:
+    void publish_camera_status(bool status)
+    {
+        std_msgs::msg::Bool msg;
+        msg.data = status;
+
+        status_pub_->publish(msg);
+    }
+
     void publish_odom()
     {
         try
@@ -66,7 +76,11 @@ private:
             rs2::frameset frames;
 
             if (!pipe_.poll_for_frames(&frames))
+            {
+                publish_camera_status(false);
                 return;
+            }
+            publish_camera_status(true);
 
             auto f = frames.first_or_default(RS2_STREAM_POSE);
 
@@ -109,17 +123,9 @@ private:
         }
         catch (const rs2::error &e)
         {
+            publish_camera_status(false);
+
             RCLCPP_ERROR(this->get_logger(), "RealSense error: %s", e.what());
-        }
-        catch (const std::exception &e)
-        {
-            RCLCPP_ERROR(this->get_logger(), "Error: %s", e.what());
-        }
-        catch (const rs2::error &e)
-        {
-            RCLCPP_ERROR(this->get_logger(),
-                         "RealSense error: %s",
-                         e.what());
 
             try
             {
@@ -148,6 +154,10 @@ private:
                              "Restart failed: %s",
                              ex.what());
             }
+        }
+        catch (const std::exception &e)
+        {
+            RCLCPP_ERROR(this->get_logger(), "Error: %s", e.what());
         }
     }
 
@@ -201,6 +211,7 @@ private:
     rs2::pipeline pipe_;
     bool pipe_running_;
     rclcpp::Publisher<nav_msgs::msg::Odometry>::SharedPtr odom_pub_;
+    rclcpp::Publisher<std_msgs::msg::Bool>::SharedPtr status_pub_;
     rclcpp::TimerBase::SharedPtr timer_;
 };
 

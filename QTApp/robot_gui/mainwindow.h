@@ -19,6 +19,7 @@
 #include <nav_msgs/msg/odometry.hpp>
 #include <geometry_msgs/msg/transform_stamped.hpp>
 #include <sensor_msgs/msg/joint_state.hpp>
+#include <std_msgs/msg/bool.hpp>
 
 #include <tf2_ros/transform_broadcaster.h>
 #include <tf2/LinearMath/Quaternion.h>
@@ -51,6 +52,7 @@ private slots:
     void updateStateRobot();
     void CmdVelCallback(const geometry_msgs::msg::Twist::SharedPtr msg);
     void odomCallback(const nav_msgs::msg::Odometry::SharedPtr msg);
+    void cameraCallback(const std_msgs::msg::Bool::SharedPtr msg);
     void resetPose();
 
     void updateFrameList();
@@ -84,6 +86,7 @@ private:
     rclcpp::Subscription<geometry_msgs::msg::Twist>::SharedPtr cmd_vel_sub_;
 //    rclcpp::Publisher<nav_msgs::msg::Odometry>::SharedPtr odom_pub_;
     rclcpp::Subscription<nav_msgs::msg::Odometry>::SharedPtr odom_sub_;
+    rclcpp::Subscription<std_msgs::msg::Bool>::SharedPtr camera_sub_;
     std::shared_ptr<tf2_ros::TransformBroadcaster> tf_broadcaster_;
     rclcpp::Publisher<sensor_msgs::msg::JointState>::SharedPtr joint_pub_;
 
@@ -92,6 +95,8 @@ private:
     double wheel_radius = 0.325;
 
     int limit_angel_vel = 40;
+
+    bool is_camera = false;
 
     double odom_x = 0.0;
     double odom_y = 0.0;

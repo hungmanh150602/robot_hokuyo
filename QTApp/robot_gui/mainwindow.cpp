@@ -119,6 +119,12 @@ MainWindow::MainWindow(QApplication *app, QWidget *parent)
 
     connect(ui->btn_StartCamera, &QPushButton::clicked, camera, &Camera_Manager::startCamera);
     connect(ui->btn_StopCamera, &QPushButton::clicked, camera, &Camera_Manager::stopCamera);
+
+    camera_sub_ = node_->create_subscription<std_msgs::msg::Bool>(
+            "/camera_status",
+            10,
+            std::bind(&MainWindow::cameraCallback, this, std::placeholders::_1));
+
     #endif
     /* =============================================================================== */
 
@@ -278,6 +284,20 @@ void MainWindow::odomCallback(const nav_msgs::msg::Odometry::SharedPtr msg)
     angular_velocity = msg->twist.twist.angular.z;
 }
 
+void MainWindow::cameraCallback(const std_msgs::msg::Bool::SharedPtr msg)
+{
+    is_camera = msg->data;
+
+    if(is_camera)
+    {
+        ui->textEdit_log->append("Camera OK");
+    }
+    else
+    {
+        ui->textEdit_log->append("Camera Lost");
+    }
+}
+
 void MainWindow::resetPose()
 {
     robot_x = 0.0;
@@ -291,7 +311,7 @@ void MainWindow::resetPose()
 
 void MainWindow::updateStateRobot()
 {
-    if(!camera){
+    if(!is_camera){
         stopRobot();
         prev_x = robot_x;
         prev_y = robot_y;
