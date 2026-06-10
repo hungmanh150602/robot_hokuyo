@@ -368,15 +368,7 @@ void MainWindow::updateStateRobot()
     t.transform.rotation.y = q.y();
     t.transform.rotation.w = q.w();
 
-    if(fabs(robot_x - last_x) > 0.001 ||
-       fabs(robot_y - last_y) > 0.001 ||
-       fabs(robot_theta - last_theta) > 0.001)
-    {
-        last_x = robot_x;
-        last_y = robot_y;
-        last_theta = robot_theta;
-        tf_broadcaster_->sendTransform(t);
-    }
+    tf_broadcaster_->sendTransform(t);
 
     /* joint_states */
     sensor_msgs::msg::JointState joint_msg;

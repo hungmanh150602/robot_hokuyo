@@ -111,10 +111,6 @@ private:
     double prev_y = 0.0;
     double prev_theta = 0.0;
 
-    double last_x = 0.0;
-    double last_y = 0.0;
-    double last_theta = 0.0;
-
     double robot_x = 0.0;
     double robot_y = 0.0;
     double robot_theta = 0.0;

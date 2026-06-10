@@ -28,7 +28,7 @@
       <origin xyz="0 0 ${ofset_z}" rpy="0 0 0" />
 
       <geometry>
-        <box size="0.20 0.18 0.06"/>
+        <cylinder radius="0.1" length="0.005"/>
         <!-- <mesh filename="package://robot_hokuyo/meshes/base_link.STL" /> -->
       </geometry>
 
@@ -64,10 +64,10 @@
     </inertial>
 
     <visual>
-      <origin xyz="0 0 0" rpy="0 0 0" />
+      <origin xyz="0 0 0" rpy="1.5708 0 0" />
 
       <geometry>
-        <cylinder radius="0.0325" length="0.02"/>
+        <cylinder radius="0.0325" length="0.026"/>
         <!-- <mesh filename="package://robot_hokuyo/meshes/right_wheel.STL" /> -->
       </geometry>
 
@@ -104,10 +104,10 @@
     </inertial>
 
     <visual>
-      <origin xyz="0 0 0" rpy="0 0 0" />
+      <origin xyz="0 0 0" rpy="1.5708 0 0" />
 
       <geometry>
-        <cylinder radius="0.0325" length="0.02"/>
+        <cylinder radius="0.0325" length="0.026"/>
         <!-- <mesh filename="package://robot_hokuyo/meshes/left_wheel.STL" /> -->
       </geometry>
 
