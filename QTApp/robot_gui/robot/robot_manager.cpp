@@ -7,6 +7,7 @@ RobotManager::RobotManager(QObject *parent)
     robot_process_ = new QProcess(this);
     map_tf_process_ = new QProcess(this);
 
+    #if 0
     robot_process_->setProcessChannelMode(QProcess::MergedChannels);
     map_tf_process_->setProcessChannelMode(QProcess::MergedChannels);  // read all: stdout stderr
 
@@ -19,6 +20,7 @@ RobotManager::RobotManager(QObject *parent)
     {
         emit newLog(QString::fromLocal8Bit(map_tf_process_->readAll()));
     });
+    #endif
 }
 
 void RobotManager::loadRobotModel()
@@ -59,6 +61,7 @@ void RobotManager::loadRobotModel()
     #endif
 
     robot_process_->start("bash", QStringList() << "-c" << command);
+    emit newLog("Load Robot SUCCESSFUL!!!");
 }
 
 void RobotManager::stop()
@@ -94,4 +97,5 @@ void RobotManager::stop()
         QStringList()
             << "-f"
             << "static_transform_publisher");
+    emit newLog("Robot Stop SUCCESSFUL!!!");
 }

@@ -12,6 +12,7 @@ SlamManager::SlamManager(QWidget *parent)
     amcl_configure_active_process_ = new QProcess(this);
     nav2_process_ = new QProcess(this);
 
+    #if 0
     slam_process_->setProcessChannelMode(QProcess::MergedChannels);  // read all: stdout stderr
     save_map_process_->setProcessChannelMode(QProcess::MergedChannels);  // read all: stdout stderr
     load_map_process_->setProcessChannelMode(QProcess::MergedChannels);  // read all: stdout stderr
@@ -54,6 +55,7 @@ SlamManager::SlamManager(QWidget *parent)
     {
         emit newLog(QString::fromLocal8Bit(nav2_process_->readAll()));
     });
+    #endif
 }
 
 void SlamManager::SlamToolBox()
@@ -76,8 +78,10 @@ void SlamManager::SlamToolBox()
 
     if(!slam_process_->waitForStarted())
     {
+        emit newLog("Slam Tool Box Run ERROR!!!");
         return;
     }
+    emit newLog("Slam Tool Box Run SUCCESSFUL!!!");
 }
 
 void SlamManager::saveMap()
@@ -158,6 +162,7 @@ void SlamManager::loadMap()
 
             configure_active_process_->start("bash", arguments);
     });
+    emit newLog("Load Map Run SUCCESSFUL!!!");
 }
 
 void SlamManager::amcl_run()
@@ -205,6 +210,7 @@ void SlamManager::amcl_run()
 
         amcl_configure_active_process_->start("bash", arguments);
     });
+    emit newLog("AMCL Run SUCCESSFUL!!!");
 }
 
 void SlamManager::nav2_run()
@@ -228,6 +234,7 @@ void SlamManager::nav2_run()
     arguments << "-c" << command;
 
     nav2_process_->start("bash", arguments);
+    emit newLog("NAV2 Run SUCCESSFUL!!!");
 }
 
 void SlamManager::stop()
@@ -289,4 +296,5 @@ void SlamManager::stop()
             nav2_process_->kill();
         }
     }
+    emit newLog("Stop All Slam, Map, AMCL, NAV2!!!");
 }

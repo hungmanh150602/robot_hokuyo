@@ -18,37 +18,40 @@ MainWindow::MainWindow(QApplication *app, QWidget *parent)
     #endif
     /* =============================================================================== */
 
-    /* ================ ROS timer ================ */
+    /* ================ Timer ================ */
     #if 1
-    ros_timer = new QTimer(this);
-    connect(ros_timer, &QTimer::timeout, this, [=](){ rclcpp::spin_some(node_); });
-    ros_timer->start(10); // 10 ms
+    node_ = rclcpp::Node::make_shared("QT_Gui_Node");
+
+    executor_ = std::make_shared<rclcpp::executors::MultiThreadedExecutor>();
+    executor_->add_node(node_);
+    ros_thread_ = std::thread([this]()
+    {
+        executor_->spin();
+    });
+
+    stateTimer = new QTimer(this);
+    connect(stateTimer, &QTimer::timeout, this, &MainWindow::updateStateRobot);
+    stateTimer->start(100); // 100 ms
     #endif
     /* =============================================================================== */
 
     /* ================ Odometry,TF ================ */
     #if 1
-    node_ = rclcpp::Node::make_shared("QT_Gui_Node");
-
     cmd_vel_sub_ = node_->create_subscription<geometry_msgs::msg::Twist>(
                 "/cmd_vel",
-                10,
+                20,
                 std::bind(&MainWindow::CmdVelCallback, this, std::placeholders::_1));
 
 //    odom_pub_ = node_->create_publisher<nav_msgs::msg::Odometry>("/odom", 10);
 
     odom_sub_ = node_->create_subscription<nav_msgs::msg::Odometry>(
                 "/odom",
-                10,
+                20,
                 std::bind(&MainWindow::odomCallback, this, std::placeholders::_1));
 
     tf_broadcaster_ = std::make_shared<tf2_ros::TransformBroadcaster>(node_);
 
-    joint_pub_ = node_->create_publisher<sensor_msgs::msg::JointState>("/joint_states", 10);
-
-    stateTimer = new QTimer(this);
-    connect(stateTimer, &QTimer::timeout, this, &MainWindow::updateStateRobot);
-    stateTimer->start(10); // 10 ms
+    joint_pub_ = node_->create_publisher<sensor_msgs::msg::JointState>("/joint_states", 100);
     #endif
     /* =============================================================================== */
 
@@ -188,6 +191,16 @@ MainWindow::~MainWindow()
         socket->disconnectFromHost();
     }
 
+    if(executor_)
+    {
+        executor_->cancel();
+    }
+
+    if(ros_thread_.joinable())
+    {
+        ros_thread_.join();
+    }
+
     rclcpp::shutdown();
 
     delete ui;
@@ -287,15 +300,6 @@ void MainWindow::odomCallback(const nav_msgs::msg::Odometry::SharedPtr msg)
 void MainWindow::cameraCallback(const std_msgs::msg::Bool::SharedPtr msg)
 {
     is_camera = msg->data;
-
-    if(is_camera)
-    {
-        ui->textEdit_log->append("Camera OK");
-    }
-    else
-    {
-        ui->textEdit_log->append("Camera Lost");
-    }
 }
 
 void MainWindow::resetPose()
@@ -311,33 +315,38 @@ void MainWindow::resetPose()
 
 void MainWindow::updateStateRobot()
 {
-    if(!is_camera){
-        stopRobot();
-        prev_x = robot_x;
-        prev_y = robot_y;
-        prev_theta = robot_theta;
-        ui->textEdit_log->append("Camera lost");
-        return;
-    }
-
-    robot_x = odom_x + prev_x;
-    robot_y = odom_y + prev_y;
-    robot_theta = odom_theta + prev_theta;
-
-    int Lin_vel = ui->Slider_Lin->value();
-
-    ui->lineEdit_Lin->setText(QString::number(Lin_vel));
-    ui->lineEditX->setText(QString::number(robot_x, 'f', 2));
-    ui->lineEditY->setText(QString::number(robot_y, 'f', 2));
-    ui->lineEditTheta->setText(QString::number(robot_theta, 'f', 2));
-
     double dt = 0.02;
 
-    #if 0
-    robot_x += linear_velocity * cos(theta) * dt;
-    robot_y += linear_velocity * sin(theta) * dt;
-    robot_theta += angular_velocity * dt;
+    #if 0 // có camera
+        robot_x += linear_velocity * cos(robot_theta) * dt;
+        robot_y += linear_velocity * sin(robot_theta) * dt;
+        robot_theta += angular_velocity * dt;
+    #else
+        if(!is_camera){
+            stopRobot();
+            prev_x = robot_x;
+            prev_y = robot_y;
+            prev_theta = robot_theta;
+            return;
+        }
+
+        robot_x = odom_x + prev_x;
+        robot_y = odom_y + prev_y;
+        robot_theta = odom_theta + prev_theta;
     #endif
+
+    int Lin_vel = ui->Slider_Lin->value();
+    static int ui_counter = 0;
+    ui_counter++;
+
+    if(ui_counter >= 2)
+    {
+        ui_counter = 0;
+        ui->lineEdit_Lin->setText(QString::number(Lin_vel));
+        ui->lineEditX->setText(QString::number(robot_x, 'f', 2));
+        ui->lineEditY->setText(QString::number(robot_y, 'f', 2));
+        ui->lineEditTheta->setText(QString::number(robot_theta, 'f', 2));
+    }
 
     /* Quaternion */
     tf2::Quaternion q;
@@ -359,7 +368,15 @@ void MainWindow::updateStateRobot()
     t.transform.rotation.z = q.z();
     t.transform.rotation.w = q.w();
 
-    tf_broadcaster_->sendTransform(t);
+    if(fabs(robot_x - last_x) > 0.001 ||
+       fabs(robot_y - last_y) > 0.001 ||
+       fabs(robot_theta - last_theta) > 0.001)
+    {
+        last_x = robot_x;
+        last_y = robot_y;
+        last_theta = robot_theta;
+        tf_broadcaster_->sendTransform(t);
+    }
 
     /* joint_states */
     sensor_msgs::msg::JointState joint_msg;

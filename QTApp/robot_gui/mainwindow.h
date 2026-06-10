@@ -15,6 +15,9 @@
 
 #include <math.h>
 
+#include <thread>
+#include <rclcpp/executors/multi_threaded_executor.hpp>
+
 #include <geometry_msgs/msg/twist.hpp>
 #include <nav_msgs/msg/odometry.hpp>
 #include <geometry_msgs/msg/transform_stamped.hpp>
@@ -73,8 +76,10 @@ private:
 
     QTcpSocket *socket;
 
+    std::shared_ptr<rclcpp::executors::MultiThreadedExecutor> executor_;
+    std::thread ros_thread_;
+
     QTimer *stateTimer;
-    QTimer *ros_timer;
 
     LidarManager *lidar;
     Camera_Manager *camera;
@@ -105,6 +110,10 @@ private:
     double prev_x = 0.0;
     double prev_y = 0.0;
     double prev_theta = 0.0;
+
+    double last_x = 0.0;
+    double last_y = 0.0;
+    double last_theta = 0.0;
 
     double robot_x = 0.0;
     double robot_y = 0.0;
