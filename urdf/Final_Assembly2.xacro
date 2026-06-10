@@ -28,7 +28,8 @@
       <origin xyz="0 0 ${ofset_z}" rpy="0 0 0" />
 
       <geometry>
-        <mesh filename="package://robot_hokuyo/meshes/base_link.STL" />
+        <box size="0.20 0.18 0.06"/>
+        <!-- <mesh filename="package://robot_hokuyo/meshes/base_link.STL" /> -->
       </geometry>
 
       <material name="">
@@ -66,7 +67,8 @@
       <origin xyz="0 0 0" rpy="0 0 0" />
 
       <geometry>
-        <mesh filename="package://robot_hokuyo/meshes/right_wheel.STL" />
+        <cylinder radius="0.0325" length="0.02"/>
+        <!-- <mesh filename="package://robot_hokuyo/meshes/right_wheel.STL" /> -->
       </geometry>
 
       <material name="">
@@ -105,7 +107,8 @@
       <origin xyz="0 0 0" rpy="0 0 0" />
 
       <geometry>
-        <mesh filename="package://robot_hokuyo/meshes/left_wheel.STL" />
+        <cylinder radius="0.0325" length="0.02"/>
+        <!-- <mesh filename="package://robot_hokuyo/meshes/left_wheel.STL" /> -->
       </geometry>
 
       <material name="">
@@ -144,7 +147,8 @@
       <origin xyz="0 0 0" rpy="0 0 0" />
 
       <geometry>
-        <mesh filename="package://robot_hokuyo/meshes/front_caster.STL" />
+        <sphere radius="0.015"/>
+        <!-- <mesh filename="package://robot_hokuyo/meshes/front_caster.STL" /> -->
       </geometry>
 
       <material name="">
@@ -183,7 +187,8 @@
       <origin xyz="0 0 0" rpy="0 0 0" />
 
       <geometry>
-        <mesh filename="package://robot_hokuyo/meshes/back_caster.STL" />
+        <sphere radius="0.015"/>
+        <!-- <mesh filename="package://robot_hokuyo/meshes/back_caster.STL" /> -->
       </geometry>
 
       <material name="">
@@ -222,7 +227,8 @@
       <origin xyz="0 0 0" rpy="0 0 0" />
 
       <geometry>
-        <mesh filename="package://robot_hokuyo/meshes/laser_link.STL" />
+        <cylinder radius="0.035" length="0.05"/>
+        <!-- <mesh filename="package://robot_hokuyo/meshes/laser_link.STL" /> -->
       </geometry>
 
       <material name="">
@@ -273,7 +279,7 @@
 
       <!-- kinematics -->
       <wheel_separation>0.236</wheel_separation>
-      <wheel_diameter>0.13</wheel_diameter>
+      <wheel_diameter>0.065</wheel_diameter>
 
       <!-- limits -->
       <max_wheel_torque>80</max_wheel_torque>

@@ -364,8 +364,8 @@ void MainWindow::updateStateRobot()
     t.transform.translation.z = 0.0;
 
     t.transform.rotation.x = q.x();
-    t.transform.rotation.y = q.y();
     t.transform.rotation.z = q.z();
+    t.transform.rotation.y = q.y();
     t.transform.rotation.w = q.w();
 
     if(fabs(robot_x - last_x) > 0.001 ||

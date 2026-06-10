@@ -97,7 +97,7 @@ private:
 
     /* Robot parameter */
     double L = 0.25;
-    double wheel_radius = 0.325;
+    double wheel_radius = 0.0325;
 
     int limit_angel_vel = 40;
 
