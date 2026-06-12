@@ -15,9 +15,6 @@
 
 #include <math.h>
 
-#include <thread>
-#include <rclcpp/executors/multi_threaded_executor.hpp>
-
 #include <geometry_msgs/msg/twist.hpp>
 #include <nav_msgs/msg/odometry.hpp>
 #include <geometry_msgs/msg/transform_stamped.hpp>
@@ -76,10 +73,8 @@ private:
 
     QTcpSocket *socket;
 
-    std::shared_ptr<rclcpp::executors::MultiThreadedExecutor> executor_;
-    std::thread ros_thread_;
-
     QTimer *stateTimer;
+    QTimer *ros_timer;
 
     LidarManager *lidar;
     Camera_Manager *camera;
@@ -97,7 +92,7 @@ private:
 
     /* Robot parameter */
     double L = 0.25;
-    double wheel_radius = 0.0325;
+    double wheel_radius = 0.325;
 
     int limit_angel_vel = 40;
 
