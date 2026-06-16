@@ -6,41 +6,44 @@ MainWindow::MainWindow(QApplication *app, QWidget *parent)
 {
     ui->setupUi(this);
 
-    /* ================ TCP Socket ================ */
-    #if 1
+/* ================ TCP Socket ================ */
+#if 1
     socket = new QTcpSocket(this);
 
     connect(ui->btnConnect, &QPushButton::clicked, this, &MainWindow::connectToESP32);
     connect(ui->btnDisConnect, &QPushButton::clicked, this, &MainWindow::disconnectToESP32);
 
-    connect(socket, &QTcpSocket::connected, this, [=](){ ui->label_statustcp->setText("Connected"); });
-    connect(socket, &QTcpSocket::disconnected, this, [=](){ ui->label_statustcp->setText("DisConnected"); });
-    #endif
-    /* =============================================================================== */
+    connect(socket, &QTcpSocket::connected, this, [=]()
+            { ui->label_statustcp->setText("Connected"); });
+    connect(socket, &QTcpSocket::disconnected, this, [=]()
+            { ui->label_statustcp->setText("DisConnected"); });
+#endif
+/* =============================================================================== */
 
-    /* ================ ROS timer ================ */
-    #if 1
+/* ================ ROS timer ================ */
+#if 1
     ros_timer = new QTimer(this);
-    connect(ros_timer, &QTimer::timeout, this, [=](){ rclcpp::spin_some(node_); });
+    connect(ros_timer, &QTimer::timeout, this, [=]()
+            { rclcpp::spin_some(node_); });
     ros_timer->start(20); // 10 ms
-    #endif
-    /* =============================================================================== */
+#endif
+/* =============================================================================== */
 
-    /* ================ Odometry,TF ================ */
-    #if 1
+/* ================ Odometry,TF ================ */
+#if 1
     node_ = rclcpp::Node::make_shared("QT_Gui_Node");
 
     cmd_vel_sub_ = node_->create_subscription<geometry_msgs::msg::Twist>(
-                "/cmd_vel",
-                20,
-                std::bind(&MainWindow::CmdVelCallback, this, std::placeholders::_1));
+        "/cmd_vel",
+        20,
+        std::bind(&MainWindow::CmdVelCallback, this, std::placeholders::_1));
 
-//    odom_pub_ = node_->create_publisher<nav_msgs::msg::Odometry>("/odom", 10);
+    //    odom_pub_ = node_->create_publisher<nav_msgs::msg::Odometry>("/odom", 10);
 
     odom_sub_ = node_->create_subscription<nav_msgs::msg::Odometry>(
-                "/odom",
-                20,
-                std::bind(&MainWindow::odomCallback, this, std::placeholders::_1));
+        "/odom",
+        20,
+        std::bind(&MainWindow::odomCallback, this, std::placeholders::_1));
 
     tf_broadcaster_ = std::make_shared<tf2_ros::TransformBroadcaster>(node_);
 
@@ -49,11 +52,11 @@ MainWindow::MainWindow(QApplication *app, QWidget *parent)
     stateTimer = new QTimer(this);
     connect(stateTimer, &QTimer::timeout, this, &MainWindow::updateStateRobot);
     stateTimer->start(20); // 10 ms
-    #endif
-    /* =============================================================================== */
+#endif
+/* =============================================================================== */
 
-    /* ================ Rviz ================ */
-    #if 1
+/* ================ Rviz ================ */
+#if 1
     rviz = new RVizManager(app_, ui->rvizWidget, node_, this);
 
     rviz->initializeRViz();
@@ -79,63 +82,55 @@ MainWindow::MainWindow(QApplication *app, QWidget *parent)
     connect(ui->btn_2DPose, &QPushButton::clicked, rviz, &RVizManager::setInitialPoseTool);
     // 2D Goal Pose
     connect(ui->btn_2DGoal, &QPushButton::clicked, rviz, &RVizManager::setGoalPoseTool);
-    #endif
-    /* =============================================================================== */
+#endif
+/* =============================================================================== */
 
-    /* ================ Load Robot Model ================ */
-    #if 1
+/* ================ Load Robot Model ================ */
+#if 1
     robot = new RobotManager(this);
     connect(robot, &RobotManager::newLog, this, [=](QString text)
-    {
-        ui->textEdit_log->append(text);
-    });
+            { ui->textEdit_log->append(text); });
 
     connect(ui->btn_LoadRobot, &QPushButton::clicked, robot, &RobotManager::loadRobotModel);
-    #endif
-    /* =============================================================================== */
+#endif
+/* =============================================================================== */
 
-    /* ================ Connect lidar ================ */
-    #if 1
+/* ================ Connect lidar ================ */
+#if 1
     lidar = new LidarManager(this);
 
     connect(lidar, &LidarManager::newLog, this, [=](QString text)
-    {
-        ui->textEdit_log->append(text);
-    });
+            { ui->textEdit_log->append(text); });
 
     connect(ui->btnConnect_lidar, &QPushButton::clicked, lidar, &LidarManager::startLidar);
     connect(ui->btnStop_lidar, &QPushButton::clicked, lidar, &LidarManager::stopLidar);
-    #endif
-    /* =============================================================================== */
+#endif
+/* =============================================================================== */
 
-    /* ================ Connect camera ================ */
-    #if 1
+/* ================ Connect camera ================ */
+#if 1
     camera = new Camera_Manager(this);
 
     connect(camera, &Camera_Manager::newLog, this, [=](QString text)
-    {
-        ui->textEdit_log->append(text);
-    });
+            { ui->textEdit_log->append(text); });
 
     connect(ui->btn_StartCamera, &QPushButton::clicked, camera, &Camera_Manager::startCamera);
     connect(ui->btn_StopCamera, &QPushButton::clicked, camera, &Camera_Manager::stopCamera);
 
     camera_sub_ = node_->create_subscription<std_msgs::msg::Bool>(
-            "/camera_status",
-            10,
-            std::bind(&MainWindow::cameraCallback, this, std::placeholders::_1));
+        "/camera_status",
+        10,
+        std::bind(&MainWindow::cameraCallback, this, std::placeholders::_1));
 
-    #endif
-    /* =============================================================================== */
+#endif
+/* =============================================================================== */
 
-    /* ================ Slam ToolBox ================ */
-    #if 1
+/* ================ Slam ToolBox ================ */
+#if 1
     slam = new SlamManager(this);
 
     connect(slam, &SlamManager::newLog, this, [=](QString text)
-    {
-        ui->textEdit_log->append(text);
-    });
+            { ui->textEdit_log->append(text); });
 
     connect(ui->btn_SlamToolBox, &QPushButton::clicked, slam, &SlamManager::SlamToolBox);
     connect(ui->btn_SaveMap, &QPushButton::clicked, slam, &SlamManager::saveMap);
@@ -143,11 +138,11 @@ MainWindow::MainWindow(QApplication *app, QWidget *parent)
     connect(ui->btn_LoadMap, &QPushButton::clicked, slam, &SlamManager::loadMap);
     connect(ui->btn_AMCL, &QPushButton::clicked, slam, &SlamManager::amcl_run);
     connect(ui->btn_NAV2, &QPushButton::clicked, slam, &SlamManager::nav2_run);
-    #endif
-    /* =============================================================================== */
+#endif
+/* =============================================================================== */
 
-    /* ================ UI Button ================ */
-    #if 1
+/* ================ UI Button ================ */
+#if 1
     /* btn rst pose */
     connect(ui->btn_RSTPose, &QPushButton::clicked, this, &MainWindow::resetPose);
 
@@ -165,7 +160,7 @@ MainWindow::MainWindow(QApplication *app, QWidget *parent)
     connect(ui->btnLeft, &QPushButton::released, this, &MainWindow::stopRobot);
     connect(ui->btnRight, &QPushButton::released, this, &MainWindow::stopRobot);
     connect(ui->btnStop, &QPushButton::released, this, &MainWindow::stopRobot);
-    #endif
+#endif
     /* =============================================================================== */
 }
 
@@ -173,17 +168,17 @@ MainWindow::~MainWindow()
 {
     killAll();
 
-    if(robot)
+    if (robot)
     {
         robot->stop();
     }
 
-    if(rviz)
+    if (rviz)
     {
         rviz->stop();
     }
 
-    if(socket)
+    if (socket)
     {
         socket->disconnectFromHost();
     }
@@ -195,17 +190,17 @@ MainWindow::~MainWindow()
 
 void MainWindow::killAll()
 {
-    if(slam)
+    if (slam)
     {
         slam->stop();
     }
 
-    if(lidar)
+    if (lidar)
     {
         lidar->stopLidar();
     }
 
-    if(camera)
+    if (camera)
     {
         camera->stopCamera();
     }
@@ -244,19 +239,27 @@ void MainWindow::CmdVelCallback(const geometry_msgs::msg::Twist::SharedPtr msg)
     angular_velocity = msg->angular.z;
 
     // compute msg send to tcp
-    double vR = linear_velocity + L/2.0 * angular_velocity;
-    double vL = linear_velocity - L/2.0 * angular_velocity;
-    int msg_vel_L = (vL - 0.00053) / 0.001915;
-    int msg_vel_R = (vR - 0.00053) / 0.001915;
+    if (is_camera)
+    {
+        double vR = linear_velocity + L / 2.0 * angular_velocity;
+        double vL = linear_velocity - L / 2.0 * angular_velocity;
+        int msg_vel_L = (vL - 0.00053) / 0.001915;
+        int msg_vel_R = (vR - 0.00053) / 0.001915;
 
-    if(msg_vel_L > limit_angel_vel) msg_vel_L = limit_angel_vel;
-    if(msg_vel_L < -limit_angel_vel) msg_vel_L = -limit_angel_vel;
-    if(msg_vel_R > limit_angel_vel) msg_vel_R = limit_angel_vel;
-    if(msg_vel_R < -limit_angel_vel) msg_vel_R = -limit_angel_vel;
+        if (msg_vel_L > limit_angel_vel)
+            msg_vel_L = limit_angel_vel;
+        if (msg_vel_L < -limit_angel_vel)
+            msg_vel_L = -limit_angel_vel;
+        if (msg_vel_R > limit_angel_vel)
+            msg_vel_R = limit_angel_vel;
+        if (msg_vel_R < -limit_angel_vel)
+            msg_vel_R = -limit_angel_vel;
 
-    if(socket->state() == QAbstractSocket::ConnectedState) {
-        QString msg = QString("%1,%2\n").arg(-msg_vel_L).arg(msg_vel_R);
-        socket->write(msg.toUtf8());
+        if (socket->state() == QAbstractSocket::ConnectedState)
+        {
+            QString msg = QString("%1,%2\n").arg(-msg_vel_L).arg(msg_vel_R);
+            socket->write(msg.toUtf8());
+        }
     }
 }
 
@@ -274,9 +277,9 @@ void MainWindow::odomCallback(const nav_msgs::msg::Odometry::SharedPtr msg)
     double roll, pitch, yaw;
 
     tf2::Matrix3x3(q).getRPY(
-                roll,
-                pitch,
-                yaw);
+        roll,
+        pitch,
+        yaw);
 
     odom_theta = yaw;
 
@@ -288,14 +291,14 @@ void MainWindow::cameraCallback(const std_msgs::msg::Bool::SharedPtr msg)
 {
     is_camera = msg->data;
 
-//    if(is_camera)
-//    {
-//        ui->textEdit_log->append("Camera OK");
-//    }
-//    else
-//    {
-//        ui->textEdit_log->append("Camera Lost");
-//    }
+    //    if(is_camera)
+    //    {
+    //        ui->textEdit_log->append("Camera OK");
+    //    }
+    //    else
+    //    {
+    //        ui->textEdit_log->append("Camera Lost");
+    //    }
 }
 
 void MainWindow::resetPose()
@@ -304,6 +307,10 @@ void MainWindow::resetPose()
     robot_y = 0.0;
     robot_theta = 0.0;
 
+    odom_x = 0.0;
+    odom_y = 0.0;
+    odom_theta = 0.0;
+
     prev_x = 0.0;
     prev_y = 0.0;
     prev_theta = 0.0;
@@ -311,12 +318,13 @@ void MainWindow::resetPose()
 
 void MainWindow::updateStateRobot()
 {
-    if(!is_camera){
+    if (!is_camera)
+    {
         stopRobot();
         prev_x = robot_x;
         prev_y = robot_y;
         prev_theta = robot_theta;
-//        ui->textEdit_log->append("Camera lost");
+        //        ui->textEdit_log->append("Camera lost");
         return;
     }
 
@@ -333,11 +341,11 @@ void MainWindow::updateStateRobot()
 
     double dt = 0.02;
 
-    #if 0
+#if 0
     robot_x += linear_velocity * cos(theta) * dt;
     robot_y += linear_velocity * sin(theta) * dt;
     robot_theta += angular_velocity * dt;
-    #endif
+#endif
 
     /* Quaternion */
     tf2::Quaternion q;
@@ -364,8 +372,8 @@ void MainWindow::updateStateRobot()
     /* joint_states */
     sensor_msgs::msg::JointState joint_msg;
 
-    double vR = linear_velocity + L/2.0 * angular_velocity;
-    double vL = linear_velocity - L/2.0 * angular_velocity;
+    double vR = linear_velocity + L / 2.0 * angular_velocity;
+    double vL = linear_velocity - L / 2.0 * angular_velocity;
 
     left_omega = vL / wheel_radius;
     right_omega = vR / wheel_radius;
@@ -420,7 +428,8 @@ void MainWindow::moveForward()
     left_omega = -vL / wheel_radius;
     right_omega = vR / wheel_radius;
 
-    if(socket->state() == QAbstractSocket::ConnectedState) {
+    if (socket->state() == QAbstractSocket::ConnectedState)
+    {
         QString msg = QString("%1,%2\n").arg(-Lin_vel).arg(Lin_vel);
         socket->write(msg.toUtf8());
     }
@@ -439,7 +448,8 @@ void MainWindow::moveBack()
     left_omega = vL / wheel_radius;
     right_omega = -vR / wheel_radius;
 
-    if(socket->state() == QAbstractSocket::ConnectedState) {
+    if (socket->state() == QAbstractSocket::ConnectedState)
+    {
         QString msg = QString("%1,%2\n").arg(Lin_vel).arg(-Lin_vel);
         socket->write(msg.toUtf8());
     }
@@ -458,7 +468,8 @@ void MainWindow::moveLeft()
     left_omega = vL / wheel_radius;
     right_omega = vR / wheel_radius;
 
-    if(socket->state() == QAbstractSocket::ConnectedState) {
+    if (socket->state() == QAbstractSocket::ConnectedState)
+    {
         QString msg = QString("%1,%2\n").arg(Lin_vel).arg(Lin_vel);
         socket->write(msg.toUtf8());
     }
@@ -477,7 +488,8 @@ void MainWindow::moveRight()
     left_omega = -vL / wheel_radius;
     right_omega = -vR / wheel_radius;
 
-    if(socket->state() == QAbstractSocket::ConnectedState) {
+    if (socket->state() == QAbstractSocket::ConnectedState)
+    {
         QString msg = QString("%1,%2\n").arg(-Lin_vel).arg(-Lin_vel);
         socket->write(msg.toUtf8());
     }
@@ -491,7 +503,8 @@ void MainWindow::stopRobot()
     left_omega = 0.0;
     right_omega = 0.0;
 
-    if(socket->state() == QAbstractSocket::ConnectedState) {
+    if (socket->state() == QAbstractSocket::ConnectedState)
+    {
         QString msg = QString("0,0\n");
         socket->write(msg.toUtf8());
     }
