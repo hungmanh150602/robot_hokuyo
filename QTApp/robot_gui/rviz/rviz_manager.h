@@ -48,10 +48,12 @@ public:
     void setLaserTopic(QString topic);
     void setMapTopic(QString topic);
     void setFixedFrame(QString frame);
+    void setMarkerTopic(const QString &topic);
 
     QStringList getAllFrames();
     QStringList getLaserTopics();
     QStringList getMapTopics();
+    QStringList getMarkerTopics();
 
     void setInitialPoseTool();
     void setGoalPoseTool();
@@ -72,6 +74,7 @@ private:
     rviz_common::Display *tf_display_;
     rviz_common::Display *laser_display_;
     rviz_common::Display *map_display_;
+    rviz_common::Display *marker_display_;
 
     std::shared_ptr<rviz_common::ros_integration::RosNodeAbstraction> rviz_ros_node_;
     std::shared_ptr<tf2_ros::Buffer> tf_buffer_;

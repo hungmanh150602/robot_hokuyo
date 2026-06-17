@@ -142,6 +142,15 @@ void RVizManager::initializeRViz()
     map_display_->subProp("Topic")->setValue("/map");
     #endif
 
+    #if 1 /* MarkerArray */
+    marker_display_ = manager_->createDisplay(
+            "rviz_default_plugins/MarkerArray",
+            "Leg Markers",
+            true);
+
+    marker_display_->subProp("Topic")->setValue("/leg_markers");
+    #endif
+
     #if 0 /* trajectory */
     auto pose =
         manager_->createDisplay(
@@ -281,6 +290,30 @@ QStringList RVizManager::getMapTopics()
     return list;
 }
 
+QStringList RVizManager::getMarkerTopics()
+{
+    QStringList list;
+
+    auto topics = node_->get_topic_names_and_types();
+
+    for(auto &topic : topics)
+    {
+        std::string name = topic.first;
+
+        for(auto &type : topic.second)
+        {
+            if(type == "visualization_msgs/msg/MarkerArray")
+            {
+                list << QString::fromStdString(name);
+            }
+        }
+    }
+
+    list.removeDuplicates();
+
+    return list;
+}
+
 void RVizManager::enableTF(bool enable)
 {
     if(tf_display_)
@@ -307,6 +340,14 @@ void RVizManager::setMapTopic(QString topic)
     if(map_display_)
     {
         map_display_->subProp("Topic")->setValue(topic);
+    }
+}
+
+void RVizManager::setMarkerTopic(const QString &topic)
+{
+    if(marker_display_)
+    {
+        marker_display_->subProp("Topic")->setValue(topic);
     }
 }
 

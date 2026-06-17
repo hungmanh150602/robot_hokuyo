@@ -58,6 +58,7 @@ private slots:
     void updateFrameList();
     void updateLaserTopics();
     void updateMapTopics();
+    void updateMarkerArrayTopics();
 
     void moveForward();
     void moveBack();

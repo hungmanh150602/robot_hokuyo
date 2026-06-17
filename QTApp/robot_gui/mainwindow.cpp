@@ -78,6 +78,9 @@ MainWindow::MainWindow(QApplication *app, QWidget *parent)
     // Map
     connect(ui->btn_Maps, &QPushButton::clicked, this, &MainWindow::updateMapTopics);
     connect(ui->comboBox_Maps, &QComboBox::currentTextChanged, rviz, &RVizManager::setMapTopic);
+    // MarkerArray
+    connect(ui->btn_MarkerArr, &QPushButton::clicked, this, &MainWindow::updateMarkerArrayTopics);
+    connect(ui->comboBox_MarkerArr, &QComboBox::currentTextChanged, rviz, &RVizManager::setMarkerTopic);
     // 2D Pose Estimate
     connect(ui->btn_2DPose, &QPushButton::clicked, rviz, &RVizManager::setInitialPoseTool);
     // 2D Goal Pose
@@ -413,6 +416,14 @@ void MainWindow::updateMapTopics()
 
     ui->comboBox_Maps->clear();
     ui->comboBox_Maps->addItems(topics);
+}
+
+void MainWindow::updateMarkerArrayTopics()
+{
+    QStringList topics = rviz->getMarkerTopics();
+
+    ui->comboBox_MarkerArr->clear();
+    ui->comboBox_MarkerArr->addItems(topics);
 }
 
 void MainWindow::moveForward()
