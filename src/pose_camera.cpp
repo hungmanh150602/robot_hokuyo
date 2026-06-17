@@ -141,6 +141,8 @@ private:
             {
                 rs2::config cfg;
                 cfg.enable_stream(RS2_STREAM_POSE, RS2_FORMAT_6DOF);
+                cfg.disable_stream(RS2_STREAM_FISHEYE, 1);
+                cfg.disable_stream(RS2_STREAM_FISHEYE, 2);
 
                 pipe_.start(cfg);
 
