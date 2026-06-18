@@ -30,6 +30,7 @@ public:
         if (!serial.empty())
             cfg.enable_device(serial);
 
+        cfg.disable_all_streams();
         cfg.enable_stream(RS2_STREAM_POSE, RS2_FORMAT_6DOF);
 
         // Start pipeline
