@@ -2,59 +2,29 @@
 
 #include <vector>
 
-namespace leg_detector_config
+struct LegDetectorConfig
 {
-    //------------------------------------------------------
     // CLUSTERING
-    //------------------------------------------------------
-    // Base DBSCAN eps
-    constexpr float CLUSTER_EPS = 0.06f;
-    // DBSCAN minimum points
-    constexpr int MIN_CLUSTER_POINTS = 5;
-    // Angle continuity
-    constexpr int MAX_ANGLE_GAP = 20;
-    // Adaptive eps multiplier
-    // constexpr float ADAPTIVE_EPS_GAIN = 1.5f;
-    // Extra eps offset
-    constexpr float ADAPTIVE_EPS_OFFSET = 0.01f;
+    float cluster_eps;
+    // int min_cluster_points;
+    // int max_angle_gap;
+    // float adaptive_eps_offset;
 
-    //------------------------------------------------------
-    // GEOMETRY FILTER
-    //------------------------------------------------------
-    constexpr float MIN_CLUSTER_WIDTH = 0.03f;
-    constexpr float MAX_CLUSTER_WIDTH = 0.30f;
+    // GEOMETRY
+    // float min_cluster_width;
+    // float max_cluster_width;
 
-    //------------------------------------------------------
-    // LEG FILTER
-    //------------------------------------------------------
-    // Radius
-    constexpr float MIN_LEG_RADIUS = 0.01f;
-    constexpr float MAX_LEG_RADIUS = 0.35f;
-    // // Shape
-    constexpr float MAX_ASPECT_RATIO = 2.5f;
-    // // Density
-    constexpr float MIN_DENSITY = 20.0f;
-    // // Circularity
-    constexpr float MAX_CIRCULAR_VARIANCE = 0.08f;
-    // // Min lidar points
-    constexpr int MIN_LEG_POINTS = 3;
-
-    //------------------------------------------------------
-    // LEG PAIR
-    //------------------------------------------------------
-    constexpr float MIN_LEG_DISTANCE = 0.10f;
-    constexpr float MAX_LEG_DISTANCE = 0.30f;
-    constexpr float MAX_RADIUS_DIFF = 0.15;
-    constexpr float MAX_DENSITY_DIFF = 150.0f;
-    // constexpr float MAX_LEG_HEIGHT_DIFF = 0.45f;
-
-    //------------------------------------------------------
     // VISUALIZATION
-    //------------------------------------------------------
-    constexpr float LEG_MARKER_SIZE = 0.12f;
-    constexpr float PERSON_MARKER_SIZE = 0.20f;
-    constexpr float PAIR_LINE_WIDTH = 0.03f;
-}
+    float person_marker_hight;
+    float person_marker_z;
+
+    // CONTROLLER
+    float target_distance;
+    float kp_linear;
+    float kp_angular;
+    float stop_radius;
+    float danger_radius;
+};
 
 struct Point2D
 {

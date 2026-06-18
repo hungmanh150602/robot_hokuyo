@@ -17,6 +17,8 @@ class LegDetector : public rclcpp::Node
 public:
     LegDetector() : Node("leg_detector")
     {
+        loadParameters();
+
         scan_sub_ = create_subscription<sensor_msgs::msg::LaserScan>(
             "/scan",
             10,
@@ -34,6 +36,29 @@ public:
     }
 
 private:
+    LegDetectorConfig config;
+
+    void loadParameters()
+    {
+        // CLUSTERING
+        this->declare_parameter("cluster_eps", 0.06);
+
+        // CONTROLLER
+        this->declare_parameter("target_distance", 0.6);
+        this->declare_parameter("kp_linear", 1.20);
+        this->declare_parameter("kp_angular", 2.50);
+        this->declare_parameter("stop_radius", 0.15);
+        this->declare_parameter("danger_radius", 0.5);
+
+        // Load value
+        config.cluster_eps = this->get_parameter("cluster_eps").as_double();
+        config.target_distance = this->get_parameter("target_distance").as_double();
+        config.kp_linear = this->get_parameter("kp_linear").as_double();
+        config.kp_angular = this->get_parameter("kp_angular").as_double();
+        config.stop_radius = this->get_parameter("stop_radius").as_double();
+        config.danger_radius = this->get_parameter("danger_radius").as_double();
+    }
+
     rclcpp::Subscription<sensor_msgs::msg::LaserScan>::SharedPtr scan_sub_;
     rclcpp::Publisher<visualization_msgs::msg::MarkerArray>::SharedPtr marker_pub_;
     rclcpp::Publisher<geometry_msgs::msg::Twist>::SharedPtr cmd_pub_;
@@ -92,14 +117,13 @@ private:
         //------------------------------------------
         // Controller
         //------------------------------------------
-        float target_distance = 1.5f;
-        float linear = 1.2f * (distance - target_distance);
-        float angular = 2.5f * angle;
+        float linear = config.kp_linear * (distance - config.target_distance);
+        float angular = config.kp_angular * angle;
 
         //------------------------------------------
         // Dead zone
         //------------------------------------------
-        if (std::abs(distance - target_distance) < 0.15f)
+        if (std::abs(distance - target_distance) < config.stop_radius)
         {
             linear = 0.0f;
             angular = 0.0f;
@@ -108,7 +132,7 @@ private:
         //------------------------------------------
         // Safety reverse
         //------------------------------------------
-        if (distance < 0.5f)
+        if (distance < config.danger_radius)
         {
             linear = -0.5f;
         }
@@ -159,7 +183,7 @@ private:
         }
 
         // Clustering
-        auto clusters = createClusters(points, leg_detector_config::CLUSTER_EPS, scan->angle_increment);
+        auto clusters = createClusters(points, config.cluster_eps, scan->angle_increment);
         //------------------------------------------------------
         // Detect persons
         //------------------------------------------------------

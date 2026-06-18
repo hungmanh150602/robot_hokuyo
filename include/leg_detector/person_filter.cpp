@@ -17,8 +17,7 @@ detectPersons(
         float width = cluster.width;
         float height = cluster.height;
 
-        float aspect = std::max(width, height) /
-                       std::max(0.01f, std::min(width, height));
+        float aspect = std::max(width, height) / std::max(0.01f, std::min(width, height));
 
         //-----------------------------------
         // Distance
@@ -28,12 +27,9 @@ detectPersons(
         //-----------------------------------
         // Rules
         //-----------------------------------
+        bool width_ok = width > 0.12f && width < 0.60f;
 
-        bool width_ok = width > 0.12f &&
-                        width < 0.60f;
-
-        bool height_ok = height > 0.08f &&
-                         height < 0.60f;
+        bool height_ok = height > 0.08f && height < 0.60f;
 
         bool aspect_ok = aspect < 4.5f;
 
