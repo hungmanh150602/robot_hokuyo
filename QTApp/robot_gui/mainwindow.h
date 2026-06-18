@@ -27,6 +27,7 @@
 
 #include "lidar/lidar_manager.h"
 #include "camera_manager.h"
+#include "person_manager.h"
 #include "rviz/rviz_manager.h"
 #include "slam/slam_manager.h"
 #include "robot/robot_manager.h"
@@ -79,6 +80,7 @@ private:
 
     LidarManager *lidar;
     Camera_Manager *camera;
+    PersonManager *person;
     RVizManager *rviz;
     SlamManager *slam;
     RobotManager *robot;

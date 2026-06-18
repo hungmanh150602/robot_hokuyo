@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE QtCreatorProject>
-<!-- Written by QtCreator 6.0.2, 2026-06-17T15:33:06. -->
+<!-- Written by QtCreator 6.0.2, 2026-06-18T09:19:55. -->
 <qtcreator>
  <data>
   <variable>EnvironmentId</variable>
@@ -105,6 +105,7 @@
 -DCMAKE_C_COMPILER:STRING=%{Compiler:Executable:C}
 -DCMAKE_CXX_COMPILER:STRING=%{Compiler:Executable:Cxx}</value>
     <value type="QString" key="CMake.Source.Directory">/home/hungubuntu/ros2_workspace/src/robot_hokuyo</value>
+    <value type="int" key="EnableQmlDebugging">0</value>
     <value type="QString" key="ProjectExplorer.BuildConfiguration.BuildDirectory">/home/hungubuntu/ros2_workspace/src/build-robot_hokuyo-Desktop-Debug</value>
     <valuemap type="QVariantMap" key="ProjectExplorer.BuildConfiguration.BuildStepList.0">
      <valuemap type="QVariantMap" key="ProjectExplorer.BuildStepList.Step.0">

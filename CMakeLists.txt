@@ -16,6 +16,7 @@ find_package(rclcpp REQUIRED)
 find_package(sensor_msgs REQUIRED)
 find_package(nav_msgs REQUIRED)
 find_package(geometry_msgs REQUIRED)
+find_package(visualization_msgs REQUIRED)
 find_package(tf2 REQUIRED)
 find_package(tf2_ros REQUIRED)
 
@@ -32,28 +33,28 @@ set(CMAKE_AUTORCC ON)
 
 set(CMAKE_INCLUDE_CURRENT_DIR ON)
 
-# Find RealSense2
-find_library(REALSENSE2_LIB realsense2)
-find_path(REALSENSE2_INCLUDE librealsense2/rs.hpp)
+## Find RealSense2
+#find_library(REALSENSE2_LIB realsense2)
+#find_path(REALSENSE2_INCLUDE librealsense2/rs.hpp)
 
-if(NOT REALSENSE2_LIB OR NOT REALSENSE2_INCLUDE)
-    message(FATAL_ERROR "RealSense2 not found. Please install librealsense2-dev")
-endif()
+#if(NOT REALSENSE2_LIB OR NOT REALSENSE2_INCLUDE)
+#    message(FATAL_ERROR "RealSense2 not found. Please install librealsense2-dev")
+#endif()
 
 # include
 include_directories(
+  include
   include/lidar_hokuyo/c
-  include/lidar_hokuyo/cpp
   QTApp/robot_gui
   QTApp/robot_gui/camera
   QTApp/robot_gui/lidar
+  QTApp/robot_gui/person_tracker
   QTApp/robot_gui/robot
-  QTApp/robot_gui/ros
   QTApp/robot_gui/rviz
   QTApp/robot_gui/slam
 )
 
-# build lidar--------------------------------
+# ===================== build publish_lidar =====================
 add_executable(publish_lidar
   src/publish_lidar.cpp
 
@@ -73,9 +74,9 @@ ament_target_dependencies(publish_lidar
   rclcpp
   sensor_msgs
 )
-#-----------------------------------------
+#--------------------------------------------------------------------
 
-# build tcp_client------------------------
+# ===================== build tcp_client =====================
 add_executable(tcp_client
   src/tcp_client.cpp
 )
@@ -87,9 +88,9 @@ ament_target_dependencies(tcp_client
   tf2
   tf2_ros
 )
-#-----------------------------------------
+#--------------------------------------------------------------------
 
-# build fake_odom------------------------
+# ===================== build fake_odom =====================
 add_executable(fake_odom
   src/fake_odom.cpp)
 
@@ -100,39 +101,57 @@ ament_target_dependencies(fake_odom
   tf2
   tf2_ros
 )
-#-----------------------------------------
+#--------------------------------------------------------------------
 
-# build pose_camera------------------------
-add_executable(pose_camera
-  src/pose_camera.cpp)
+# ===================== build pose_camera =====================
+#add_executable(pose_camera
+#  src/pose_camera.cpp)
 
-target_include_directories(pose_camera PRIVATE
-    ${REALSENSE2_INCLUDE}
+#target_include_directories(pose_camera PRIVATE
+#    ${REALSENSE2_INCLUDE}
+#)
+
+#target_link_libraries(pose_camera
+#    ${REALSENSE2_LIB}
+#    ${OpenCV_LIBS}
+#)
+
+#target_compile_features(pose_camera PUBLIC c_std_99 cxx_std_17)
+
+#ament_target_dependencies(pose_camera
+#  rclcpp
+#  geometry_msgs
+#  nav_msgs
+#)
+#--------------------------------------------------------------------
+
+# ===================== build leg_follower_node =====================
+add_executable(leg_follower_node
+  src/leg_follower_node.cpp
+
+  include/leg_detector/clustering.cpp
+  include/leg_detector/person_filter.cpp
+  include/leg_detector/visualization.cpp
+  include/leg_detector/types.cpp
 )
 
-target_link_libraries(pose_camera
-    ${REALSENSE2_LIB}
-    ${OpenCV_LIBS}
-)
-
-target_compile_features(pose_camera PUBLIC c_std_99 cxx_std_17)
-
-ament_target_dependencies(pose_camera
+ament_target_dependencies(leg_follower_node
   rclcpp
+  sensor_msgs
+  visualization_msgs
   geometry_msgs
-  nav_msgs
 )
-#-----------------------------------------
+#--------------------------------------------------------------------
 
-# build robot_gui------------------------
+# ===================== build robot_gui =====================
 add_executable(robot_gui
   QTApp/robot_gui/main.cpp
   QTApp/robot_gui/mainwindow.cpp
   QTApp/robot_gui/mainwindow.ui
   QTApp/robot_gui/camera/camera_manager.cpp
   QTApp/robot_gui/lidar/lidar_manager.cpp
+  QTApp/robot_gui/person_tracker/person_manager.cpp
   QTApp/robot_gui/robot/robot_manager.cpp
-  QTApp/robot_gui/ros/ros_manager.cpp
   QTApp/robot_gui/rviz/rviz_manager.cpp
   QTApp/robot_gui/slam/slam_manager.cpp
 )
@@ -162,13 +181,14 @@ ament_target_dependencies(robot_gui
   rviz_rendering
   rviz_ogre_vendor
 )
-#-----------------------------------------
+#--------------------------------------------------------------------
 
 install(TARGETS
-  pose_camera
+#  pose_camera
   publish_lidar
   tcp_client
   fake_odom
+  leg_follower_node
   robot_gui
   DESTINATION lib/${PROJECT_NAME}
 )

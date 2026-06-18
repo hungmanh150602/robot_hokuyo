@@ -126,7 +126,19 @@ MainWindow::MainWindow(QApplication *app, QWidget *parent)
         std::bind(&MainWindow::cameraCallback, this, std::placeholders::_1));
 
 #endif
-/* =============================================================================== */
+    /* =============================================================================== */
+
+/* ================ Connect leg_follower ================ */
+#if 1
+    person = new PersonManager(this);
+
+    connect(person, &PersonManager::newLog, this, [=](QString text)
+            { ui->textEdit_log->append(text); });
+
+    connect(ui->btn_PerTracker, &QPushButton::clicked, person, &PersonManager::startPersonTracker);
+    connect(ui->btn_StopTracker, &QPushButton::clicked, person, &PersonManager::stop);
+#endif
+    /* =============================================================================== */
 
 /* ================ Slam ToolBox ================ */
 #if 1
@@ -207,6 +219,13 @@ void MainWindow::killAll()
     {
         camera->stopCamera();
     }
+
+    if (person)
+    {
+        person->stop();
+    }
+
+    ui->textEdit_log->append("Stop All: Lidar, Camera, Person Tracker, Slam, Map, AMCL, NAV2!!!");
 }
 
 void MainWindow::connectToESP32()

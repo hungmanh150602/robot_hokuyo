@@ -23,4 +23,6 @@ const QString lidar_run = "ros2 run robot_hokuyo publish_lidar";
 const QString camera_run = "ros2 run robot_hokuyo pose_camera";
 
 const QString robot_run = "ros2 run robot_state_publisher";
+
+const QString persontracker_run = "ros2 run robot_hokuyo leg_follower_node";
 #endif

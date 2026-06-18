@@ -296,5 +296,4 @@ void SlamManager::stop()
             nav2_process_->kill();
         }
     }
-    emit newLog("Stop All Slam, Map, AMCL, NAV2!!!");
 }
