@@ -88,6 +88,13 @@ struct Person
     int lost_frames = 0;
 };
 
+enum class TrackState
+{
+    SEARCH_CAMERA,
+    TRACK_TARGET,
+    LOST_TARGET
+};
+
 float distance(const Point2D &a, const Point2D &b);
 Point2D computeCenter(const std::vector<Point2D> &pts);
 float computeWidth(const std::vector<Point2D> &pts);
