@@ -61,6 +61,33 @@ struct Cluster
     float arc_angle = 0.0f;
 };
 
+struct Person
+{
+    int id = -1;
+
+    Point2D center;
+
+    Cluster cluster;
+
+    float width = 0.0f;
+    float height = 0.0f;
+
+    float confidence = 0.0f;
+
+    // tracking
+    float vx = 0.0f;
+    float vy = 0.0f;
+
+    // camera fusion
+    bool matched_with_camera = false;
+    bool updated = false;
+
+    float angle = 0.0f;
+    float distance = 0.0f;
+
+    int lost_frames = 0;
+};
+
 float distance(const Point2D &a, const Point2D &b);
 Point2D computeCenter(const std::vector<Point2D> &pts);
 float computeWidth(const std::vector<Point2D> &pts);

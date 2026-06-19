@@ -5,7 +5,6 @@
 
 #include <visualization_msgs/msg/marker_array.hpp>
 
-visualization_msgs::msg::MarkerArray
-createMarkers(
-    const std::vector<Cluster>& clusters,
-    const std::vector<Person>& persons);
+visualization_msgs::msg::MarkerArray createMarkers(
+    const std::vector<Cluster> &clusters,
+    const std::vector<Person> &persons);

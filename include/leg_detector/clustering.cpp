@@ -51,9 +51,7 @@ std::vector<Cluster> createClusters(
 
     clusters.reserve(64);
 
-    //-----------------------------------------
     // KDTree
-    //-----------------------------------------
     PointCloudAdaptor adaptor(points);
 
     KDTree tree(
@@ -63,9 +61,7 @@ std::vector<Cluster> createClusters(
 
     tree.buildIndex();
 
-    //-----------------------------------------
     // DBSCAN params
-    //-----------------------------------------
     constexpr int MIN_PTS = 5;
 
     //-----------------------------------------
@@ -76,35 +72,25 @@ std::vector<Cluster> createClusters(
     //-----------------------------------------
     std::vector<int> labels(points.size(), -1);
 
-    //-----------------------------------------
     // Neighbor cache
-    //-----------------------------------------
     std::vector<std::vector<unsigned int>> neighbor_cache(points.size());
 
     nanoflann::SearchParams params;
 
     int cluster_id = 1;
 
-    //-----------------------------------------
     // Main loop
-    //-----------------------------------------
     for (size_t i = 0; i < points.size(); i++)
     {
         if (labels[i] != -1)
             continue;
 
-        //-------------------------------------
         // Adaptive eps
-        //-------------------------------------
         float r = std::hypot(points[i].x, points[i].y);
-
         float adaptive_eps = base_eps + r * angle_increment * 1.5f + 0.01f;
-
         float radius_sq = adaptive_eps * adaptive_eps;
 
-        //-------------------------------------
         // Neighbor query
-        //-------------------------------------
         auto &neighbors = neighbor_cache[i];
 
         if (neighbors.empty())
@@ -127,18 +113,14 @@ std::vector<Cluster> createClusters(
             }
         }
 
-        //-------------------------------------
         // Noise
-        //-------------------------------------
         if (neighbors.size() < MIN_PTS)
         {
             labels[i] = 0;
             continue;
         }
 
-        //-------------------------------------
         // Create cluster
-        //-------------------------------------
         Cluster cluster;
 
         cluster.id = cluster_id++;
@@ -150,9 +132,7 @@ std::vector<Cluster> createClusters(
 
         labels[i] = cluster.id;
 
-        //-------------------------------------
         // BFS expansion
-        //-------------------------------------
         while (!q.empty())
         {
             unsigned int idx = q.front();
@@ -161,16 +141,12 @@ std::vector<Cluster> createClusters(
 
             cluster.points.push_back(points[idx]);
 
-            //---------------------------------
             // Local adaptive eps
-            //---------------------------------
             float local_r = std::hypot(points[idx].x, points[idx].y);
             float local_eps = base_eps + local_r * angle_increment * 1.5f + 0.01f;
             float local_radius_sq = local_eps * local_eps;
 
-            //---------------------------------
             // Neighbor cache
-            //---------------------------------
             auto &local_neighbors = neighbor_cache[idx];
 
             if (local_neighbors.empty())
@@ -187,9 +163,7 @@ std::vector<Cluster> createClusters(
                     local_matches,
                     params);
 
-                //---------------------------------
                 // Angle continuity constraint
-                //---------------------------------
                 for (const auto &m : local_matches)
                 {
                     unsigned int n = m.first;
@@ -201,9 +175,7 @@ std::vector<Cluster> createClusters(
                 }
             }
 
-            //---------------------------------
             // Expand cluster
-            //---------------------------------
             if (local_neighbors.size() >= MIN_PTS)
             {
                 for (unsigned int n : local_neighbors)
@@ -217,22 +189,16 @@ std::vector<Cluster> createClusters(
             }
         }
 
-        //-------------------------------------
         // Remove tiny clusters
-        //-------------------------------------
         if (cluster.points.size() < MIN_PTS)
             continue;
 
-        //-------------------------------------
         // Compute center
-        //-------------------------------------
         cluster.center =
             computeCenter(
                 cluster.points);
 
-        //-------------------------------------
         // Bounding box
-        //-------------------------------------
         float min_x = 1e9f;
         float max_x = -1e9f;
 
@@ -251,15 +217,11 @@ std::vector<Cluster> createClusters(
         cluster.height = max_y - min_y;
         cluster.radius = std::max(cluster.width, cluster.height) * 0.5f;
 
-        //-------------------------------------
         // Density
-        //-------------------------------------
         float area = cluster.width * cluster.height;
         cluster.density = cluster.points.size() / std::max(area, 0.0001f);
 
-        //-------------------------------------
         // Outlier trimming
-        //-------------------------------------
         std::vector<Point2D> filtered;
         filtered.reserve(cluster.points.size());
 
@@ -284,18 +246,14 @@ std::vector<Cluster> createClusters(
 
         cluster.points = std::move(filtered);
 
-        //-------------------------------------
         // Reject impossible geometry
-        //-------------------------------------
         if (cluster.width < 0.03f)
             continue;
 
         if (cluster.width > 0.30f)
             continue;
 
-        //-------------------------------------
         // Accept
-        //-------------------------------------
         clusters.push_back(std::move(cluster));
     }
     return clusters;

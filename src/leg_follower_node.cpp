@@ -63,16 +63,12 @@ private:
     rclcpp::Publisher<visualization_msgs::msg::MarkerArray>::SharedPtr marker_pub_;
     rclcpp::Publisher<geometry_msgs::msg::Twist>::SharedPtr cmd_pub_;
 
-    //----------------------------------------------
     // Follow controller
-    //----------------------------------------------
     void followPerson(const std::vector<Person> &persons)
     {
         geometry_msgs::msg::Twist cmd;
 
-        //------------------------------------------
         // No target
-        //------------------------------------------
         if (persons.empty())
         {
             cmd.linear.x = 0.0;
@@ -82,9 +78,7 @@ private:
             return;
         }
 
-        //------------------------------------------
         // Find nearest person
-        //------------------------------------------
         int best_idx = -1;
         float best_dist = 999.0f;
 
@@ -102,49 +96,35 @@ private:
         if (best_idx < 0)
             return;
 
-        //------------------------------------------
         // Target
-        //------------------------------------------
         float x = persons[best_idx].center.x;
         float y = persons[best_idx].center.y;
 
-        //------------------------------------------
         // Distance + angle
-        //------------------------------------------
         float distance = best_dist;
         float angle = std::atan2(y, x);
 
-        //------------------------------------------
         // Controller
-        //------------------------------------------
         float linear = config.kp_linear * (distance - config.target_distance);
         float angular = config.kp_angular * angle;
-        
-        //------------------------------------------
+
         // Limit
-        //------------------------------------------
         linear = std::clamp(linear, -0.12f, 0.12f);
         angular = std::clamp(angular, -1.0f, 1.0f);
 
-        //------------------------------------------
         // Dead zone
-        //------------------------------------------
         if (std::abs(distance - config.target_distance) < config.stop_radius)
         {
             linear = 0.0f;
         }
 
-        //------------------------------------------
         // Safety reverse
-        //------------------------------------------
         if (distance < config.danger_radius)
         {
             linear = -0.2f;
         }
 
-        //------------------------------------------
         // Publish
-        //------------------------------------------
         cmd.linear.x = linear;
         cmd.angular.z = angular;
 
@@ -183,17 +163,11 @@ private:
 
         // Clustering
         auto clusters = createClusters(points, config.cluster_eps, scan->angle_increment);
-        //------------------------------------------------------
         // Detect persons
-        //------------------------------------------------------
         auto persons = detectPersons(clusters);
-        //------------------------------------------
         // Follow
-        //------------------------------------------
         followPerson(persons);
-        //------------------------------------------------------
         // Publish markers
-        //------------------------------------------------------
         auto markers = createMarkers(clusters, persons);
 
         marker_pub_->publish(markers);
@@ -203,11 +177,8 @@ private:
 int main(int argc, char **argv)
 {
     rclcpp::init(argc, argv);
-
     auto node = std::make_shared<LegDetector>();
-
     rclcpp::spin(node);
-
     rclcpp::shutdown();
 
     return 0;

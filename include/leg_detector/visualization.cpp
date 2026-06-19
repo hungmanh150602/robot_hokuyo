@@ -2,8 +2,7 @@
 
 #include <rclcpp/rclcpp.hpp>
 
-visualization_msgs::msg::MarkerArray
-createMarkers(
+visualization_msgs::msg::MarkerArray createMarkers(
     const std::vector<Cluster>& clusters,
     const std::vector<Person>& persons)
 {
@@ -13,9 +12,7 @@ createMarkers(
 
     int id = 0;
 
-    //----------------------------------------------------
     // Draw clusters
-    //----------------------------------------------------
     for (const auto& cluster : clusters)
     {
         visualization_msgs::msg::Marker marker;
@@ -27,24 +24,18 @@ createMarkers(
         marker.type = visualization_msgs::msg::Marker::SPHERE;
         marker.action = visualization_msgs::msg::Marker::ADD;
 
-        //----------------------------------------
         // Position
-        //----------------------------------------
         marker.pose.position.x = cluster.center.x;
         marker.pose.position.y = cluster.center.y;
         marker.pose.position.z = 0.0;
         marker.pose.orientation.w = 1.0;
 
-        //----------------------------------------
         // Cluster size
-        //----------------------------------------
         marker.scale.x = std::max(cluster.width, 0.05f);
         marker.scale.y = std::max(cluster.height, 0.05f);
         marker.scale.z = 0.05f;
 
-        //----------------------------------------
         // BLUE
-        //----------------------------------------
         marker.color.r = 0.0f;
         marker.color.g = 0.4f;
         marker.color.b = 1.0f;
@@ -54,14 +45,10 @@ createMarkers(
         marker_array.markers.push_back(marker);
     }
 
-    //----------------------------------------------------
     // Draw detected persons
-    //----------------------------------------------------
     for (const auto& person : persons)
     {
-        //----------------------------------------
         // PERSON BODY
-        //----------------------------------------
         visualization_msgs::msg::Marker body;
 
         body.header.frame_id = "lidar_link";
@@ -71,24 +58,18 @@ createMarkers(
         body.type = visualization_msgs::msg::Marker::CYLINDER;
         body.action =visualization_msgs::msg::Marker::ADD;
 
-        //----------------------------------------
         // Position
-        //----------------------------------------
         body.pose.position.x = person.center.x;
         body.pose.position.y = person.center.y;
         body.pose.position.z = 0.0;
         body.pose.orientation.w = 1.0;
 
-        //----------------------------------------
         // Body size
-        //----------------------------------------
         body.scale.x = std::max(person.width, 0.15f);
         body.scale.y = std::max(person.width, 0.15f);
         body.scale.z = 0.8f;
 
-        //----------------------------------------
         // YELLOW
-        //----------------------------------------
         body.color.r = 1.0f;
         body.color.g = 1.0f;
         body.color.b = 0.0f;
@@ -97,9 +78,7 @@ createMarkers(
 
         marker_array.markers.push_back(body);
 
-        //----------------------------------------
         // PERSON CENTER
-        //----------------------------------------
         visualization_msgs::msg::Marker center;
 
         center.header.frame_id = "lidar_link";
@@ -114,16 +93,12 @@ createMarkers(
         center.pose.position.z = 0.05;
         center.pose.orientation.w = 1.0;
 
-        //----------------------------------------
         // Size
-        //----------------------------------------
         center.scale.x = 0.08f;
         center.scale.y = 0.08f;
         center.scale.z = 0.08f;
 
-        //----------------------------------------
         // RED
-        //----------------------------------------
         center.color.r = 1.0f;
         center.color.g = 0.0f;
         center.color.b = 0.0f;
@@ -132,9 +107,7 @@ createMarkers(
 
         marker_array.markers.push_back(center);
 
-        //----------------------------------------
         // TEXT
-        //----------------------------------------
         visualization_msgs::msg::Marker text;
 
         text.header.frame_id = "lidar_link";
@@ -150,9 +123,7 @@ createMarkers(
         text.pose.orientation.w = 1.0;
         text.scale.z = 0.15f;
 
-        //----------------------------------------
         // WHITE
-        //----------------------------------------
         text.color.r = 1.0f;
         text.color.g = 1.0f;
         text.color.b = 1.0f;

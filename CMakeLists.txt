@@ -33,13 +33,13 @@ set(CMAKE_AUTORCC ON)
 
 set(CMAKE_INCLUDE_CURRENT_DIR ON)
 
-## Find RealSense2
-#find_library(REALSENSE2_LIB realsense2)
-#find_path(REALSENSE2_INCLUDE librealsense2/rs.hpp)
+# Find RealSense2
+find_library(REALSENSE2_LIB realsense2)
+find_path(REALSENSE2_INCLUDE librealsense2/rs.hpp)
 
-#if(NOT REALSENSE2_LIB OR NOT REALSENSE2_INCLUDE)
-#    message(FATAL_ERROR "RealSense2 not found. Please install librealsense2-dev")
-#endif()
+if(NOT REALSENSE2_LIB OR NOT REALSENSE2_INCLUDE)
+   message(FATAL_ERROR "RealSense2 not found. Please install librealsense2-dev")
+endif()
 
 # include
 include_directories(
@@ -104,25 +104,25 @@ ament_target_dependencies(fake_odom
 #--------------------------------------------------------------------
 
 # ===================== build pose_camera =====================
-#add_executable(pose_camera
-#  src/pose_camera.cpp)
+add_executable(pose_camera
+ src/pose_camera.cpp)
 
-#target_include_directories(pose_camera PRIVATE
-#    ${REALSENSE2_INCLUDE}
-#)
+target_include_directories(pose_camera PRIVATE
+   ${REALSENSE2_INCLUDE}
+)
 
-#target_link_libraries(pose_camera
-#    ${REALSENSE2_LIB}
-#    ${OpenCV_LIBS}
-#)
+target_link_libraries(pose_camera
+   ${REALSENSE2_LIB}
+   ${OpenCV_LIBS}
+)
 
-#target_compile_features(pose_camera PUBLIC c_std_99 cxx_std_17)
+target_compile_features(pose_camera PUBLIC c_std_99 cxx_std_17)
 
-#ament_target_dependencies(pose_camera
-#  rclcpp
-#  geometry_msgs
-#  nav_msgs
-#)
+ament_target_dependencies(pose_camera
+ rclcpp
+ geometry_msgs
+ nav_msgs
+)
 #--------------------------------------------------------------------
 
 # ===================== build leg_follower_node =====================
@@ -184,7 +184,7 @@ ament_target_dependencies(robot_gui
 #--------------------------------------------------------------------
 
 install(TARGETS
-#  pose_camera
+  pose_camera
   publish_lidar
   tcp_client
   fake_odom
