@@ -7,7 +7,7 @@ RobotManager::RobotManager(QObject *parent)
     robot_process_ = new QProcess(this);
     map_tf_process_ = new QProcess(this);
 
-    #if 0
+    #if 1
     robot_process_->setProcessChannelMode(QProcess::MergedChannels);
     map_tf_process_->setProcessChannelMode(QProcess::MergedChannels);  // read all: stdout stderr
 

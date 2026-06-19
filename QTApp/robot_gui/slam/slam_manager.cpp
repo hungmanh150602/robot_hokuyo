@@ -12,7 +12,7 @@ SlamManager::SlamManager(QWidget *parent)
     amcl_configure_active_process_ = new QProcess(this);
     nav2_process_ = new QProcess(this);
 
-    #if 0
+    #if 1
     slam_process_->setProcessChannelMode(QProcess::MergedChannels);  // read all: stdout stderr
     save_map_process_->setProcessChannelMode(QProcess::MergedChannels);  // read all: stdout stderr
     load_map_process_->setProcessChannelMode(QProcess::MergedChannels);  // read all: stdout stderr
@@ -127,7 +127,7 @@ void SlamManager::loadMap()
             src_ros + " && "
             + src_ws + " && "
             "ros2 run nav2_map_server map_server"
-            " --ros-args "
+            " --ros-args"
             " -p yaml_filename:=" + map_fileName;
 
     if(use_sim_time_) {

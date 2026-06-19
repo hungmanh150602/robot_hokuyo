@@ -261,27 +261,15 @@ void MainWindow::CmdVelCallback(const geometry_msgs::msg::Twist::SharedPtr msg)
     angular_velocity = msg->angular.z;
 
     // compute msg send to tcp
-    if (is_camera)
+    double vR = linear_velocity + L / 2.0 * angular_velocity;
+    double vL = linear_velocity - L / 2.0 * angular_velocity;
+    int msg_vel_L = (vL - 0.00053) / 0.001915;
+    int msg_vel_R = (vR - 0.00053) / 0.001915;
+
+    if (socket->state() == QAbstractSocket::ConnectedState)
     {
-        double vR = linear_velocity + L / 2.0 * angular_velocity;
-        double vL = linear_velocity - L / 2.0 * angular_velocity;
-        int msg_vel_L = (vL - 0.00053) / 0.001915;
-        int msg_vel_R = (vR - 0.00053) / 0.001915;
-
-        if (msg_vel_L > limit_angel_vel)
-            msg_vel_L = limit_angel_vel;
-        if (msg_vel_L < -limit_angel_vel)
-            msg_vel_L = -limit_angel_vel;
-        if (msg_vel_R > limit_angel_vel)
-            msg_vel_R = limit_angel_vel;
-        if (msg_vel_R < -limit_angel_vel)
-            msg_vel_R = -limit_angel_vel;
-
-        if (socket->state() == QAbstractSocket::ConnectedState)
-        {
-            QString msg = QString("%1,%2\n").arg(-msg_vel_L).arg(msg_vel_R);
-            socket->write(msg.toUtf8());
-        }
+        QString msg = QString("%1,%2\n").arg(-msg_vel_L).arg(msg_vel_R);
+        socket->write(msg.toUtf8());
     }
 }
 
@@ -340,15 +328,15 @@ void MainWindow::resetPose()
 
 void MainWindow::updateStateRobot()
 {
-    if (!is_camera)
-    {
-        stopRobot();
-        prev_x = robot_x;
-        prev_y = robot_y;
-        prev_theta = robot_theta;
-        //        ui->textEdit_log->append("Camera lost");
-        return;
-    }
+    // if (!is_camera)
+    // {
+    //     stopRobot();
+    //     prev_x = robot_x;
+    //     prev_y = robot_y;
+    //     prev_theta = robot_theta;
+    //     //        ui->textEdit_log->append("Camera lost");
+    //     return;
+    // }
 
     robot_x = odom_x + prev_x;
     robot_y = odom_y + prev_y;

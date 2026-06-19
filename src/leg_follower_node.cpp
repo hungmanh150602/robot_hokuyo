@@ -119,14 +119,19 @@ private:
         //------------------------------------------
         float linear = config.kp_linear * (distance - config.target_distance);
         float angular = config.kp_angular * angle;
+        
+        //------------------------------------------
+        // Limit
+        //------------------------------------------
+        linear = std::clamp(linear, -0.12f, 0.12f);
+        angular = std::clamp(angular, -1.0f, 1.0f);
 
         //------------------------------------------
         // Dead zone
         //------------------------------------------
-        if (std::abs(distance - target_distance) < config.stop_radius)
+        if (std::abs(distance - config.target_distance) < config.stop_radius)
         {
             linear = 0.0f;
-            angular = 0.0f;
         }
 
         //------------------------------------------
@@ -134,14 +139,8 @@ private:
         //------------------------------------------
         if (distance < config.danger_radius)
         {
-            linear = -0.5f;
+            linear = -0.2f;
         }
-
-        //------------------------------------------
-        // Limit
-        //------------------------------------------
-        linear = std::clamp(linear, -0.5f, 0.5f);
-        angular = std::clamp(angular, -1.0f, 1.0f);
 
         //------------------------------------------
         // Publish

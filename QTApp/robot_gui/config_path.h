@@ -14,9 +14,11 @@ const QString robot_fileName = "/home/" + user_name + "/" + work_space + "/src/r
 
 const QString map_fileName = "/home/" + user_name + "/" + work_space + "/src/robot_hokuyo/maps/my_map_save.yaml";
 
-const QString slam_fileName = "/home/" + user_name + "/" + work_space + "/src/robot_hokuyo/maps/mapper_params_online_sync.yaml";
+const QString slam_fileName = "/home/" + user_name + "/" + work_space + "/src/robot_hokuyo/mapper_params_online_sync.yaml";
 
-const QString nav2_fileName = "/home/" + user_name + "/" + work_space + "/src/robot_hokuyo/NAV2/nav2_params.yaml";
+const QString nav2_fileName = "/home/" + user_name + "/" + work_space + "/src/robot_hokuyo/nav2_params.yaml";
+
+const QString persontracker_fileName = "/home/" + user_name + "/" + work_space + "/src/robot_hokuyo/leg_detector.yaml";
 
 const QString lidar_run = "ros2 run robot_hokuyo publish_lidar";
 

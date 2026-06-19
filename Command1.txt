@@ -13,3 +13,5 @@ ros2 run rviz2 rviz2 -d /opt/ros/humble/share/nav2_bringup/rviz/nav2_default_vie
 Bấm nút 2D Pose Estimate, click lên bản đồ để đặt vị trí robot (khoảng (0,0) nếu chưa biết).
 =======================================================================================
 ros2 run tf2_ros tf2_echo map odom
+
+ros2 run robot_hokuyo leg_follower_node --ros-args --params-file src/robot_hokuyo/leg_detector.yaml

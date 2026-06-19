@@ -21,8 +21,8 @@ leg_detector:
     #------------------------------------------------------
     # Controller
     #------------------------------------------------------
-    target_distance: 0.6
-    kp_linear: 1.20
+    target_distance: 1.0
+    kp_linear: 1.80
     kp_angular: 2.50
-    stop_radius: 0.15
-    danger_radius: 0.5
+    stop_radius: 0.2
+    danger_radius: 0.2

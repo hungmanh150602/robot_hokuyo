@@ -97,8 +97,6 @@ private:
     double L = 0.25;
     double wheel_radius = 0.325;
 
-    int limit_angel_vel = 40;
-
     bool is_camera = false;
 
     double odom_x = 0.0;

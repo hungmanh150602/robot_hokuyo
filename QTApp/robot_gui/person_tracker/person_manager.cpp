@@ -20,14 +20,18 @@ void PersonManager::startPersonTracker()
         return;
     }
 
-    QString program = "bash";
+    QString command =
+            src_ros + " && "
+            + src_ws + " && "
+            + persontracker_run
+            + " --ros-args"
+            " --params-file " + persontracker_fileName;
+
     QStringList arguments;
 
-    arguments << "-c"
-              << src_ros + " && "
-                 + src_ws + " && " + persontracker_run;
+    arguments << "-c" << command;
 
-    personTracker_process_->start(program, arguments);
+    personTracker_process_->start("bash", arguments);
 
     if (!personTracker_process_->waitForStarted())
     {
