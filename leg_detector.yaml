@@ -21,8 +21,10 @@ leg_detector:
     #------------------------------------------------------
     # Controller
     #------------------------------------------------------
-    target_distance: 1.0
-    kp_linear: 1.80
+    target_distance: 0.8
+    kp_linear: 0.80
     kp_angular: 2.50
+    max_linear_veclocity: 0.05
+    max_angular_veclocity: 0.6
     stop_radius: 0.2
     danger_radius: 0.2

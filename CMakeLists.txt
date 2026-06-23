@@ -143,6 +143,24 @@ ament_target_dependencies(leg_follower_node
 )
 #--------------------------------------------------------------------
 
+# ===================== build person_tracker_node =====================
+add_executable(person_tracker_node
+  src/person_tracker_node.cpp
+
+  include/person_detector/clustering.cpp
+  include/person_detector/person_filter.cpp
+  include/person_detector/visualization.cpp
+  include/person_detector/types.cpp
+)
+
+ament_target_dependencies(person_tracker_node
+  rclcpp
+  sensor_msgs
+  visualization_msgs
+  geometry_msgs
+)
+#--------------------------------------------------------------------
+
 # ===================== build robot_gui =====================
 add_executable(robot_gui
   QTApp/robot_gui/main.cpp
@@ -189,6 +207,7 @@ install(TARGETS
   tcp_client
   fake_odom
   leg_follower_node
+  person_tracker_node
   robot_gui
   DESTINATION lib/${PROJECT_NAME}
 )
@@ -201,6 +220,7 @@ install(
     scripts/a_star.py
     scripts/path_follower.py
     scripts/AStar_Navigation.py
+    scripts/camera_detect.py
   DESTINATION lib/${PROJECT_NAME}
 )
 
@@ -210,6 +230,7 @@ install(DIRECTORY
   launch
   rviz
   maps
+  scripts
   DESTINATION share/${PROJECT_NAME}
 )
 
