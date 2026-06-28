@@ -7,12 +7,13 @@ MainWindow::MainWindow(QApplication *app, QWidget *parent)
     ui->setupUi(this);
 
 /* ================ TCP Socket ================ */
-#if 1
+#if USE_TCP_SOCKET
     socket = new QTcpSocket(this);
 
     connect(ui->btnConnect, &QPushButton::clicked, this, &MainWindow::connectToESP32);
     connect(ui->btnDisConnect, &QPushButton::clicked, this, &MainWindow::disconnectToESP32);
 
+    // Log
     connect(socket, &QTcpSocket::connected, this, [=]()
             { ui->label_statustcp->setText("Connected"); });
     connect(socket, &QTcpSocket::disconnected, this, [=]()
@@ -21,16 +22,21 @@ MainWindow::MainWindow(QApplication *app, QWidget *parent)
 /* =============================================================================== */
 
 /* ================ ROS timer ================ */
-#if 1
+#if USE_ROS_TIMER
     ros_timer = new QTimer(this);
     connect(ros_timer, &QTimer::timeout, this, [=]()
             { rclcpp::spin_some(node_); });
     ros_timer->start(20); // 10 ms
+
+    stateTimer = new QTimer(this);
+    connect(stateTimer, &QTimer::timeout, this,
+            &MainWindow::updateStateRobot);
+    stateTimer->start(20); // 10 ms
 #endif
 /* =============================================================================== */
 
-/* ================ Odometry,TF ================ */
-#if 1
+/* ================ Subscriber and Publisher ================ */
+#if USE_SUB_AND_PUB
     node_ = rclcpp::Node::make_shared("QT_Gui_Node");
 
     cmd_vel_sub_ = node_->create_subscription<geometry_msgs::msg::Twist>(
@@ -38,25 +44,25 @@ MainWindow::MainWindow(QApplication *app, QWidget *parent)
         20,
         std::bind(&MainWindow::CmdVelCallback, this, std::placeholders::_1));
 
-    //    odom_pub_ = node_->create_publisher<nav_msgs::msg::Odometry>("/odom", 10);
-
     odom_sub_ = node_->create_subscription<nav_msgs::msg::Odometry>(
-        "/odom",
+        "/odom_camera",
         20,
         std::bind(&MainWindow::odomCallback, this, std::placeholders::_1));
 
-    tf_broadcaster_ = std::make_shared<tf2_ros::TransformBroadcaster>(node_);
+    camera_sub_ = node_->create_subscription<std_msgs::msg::Bool>(
+        "/camera_status",
+        10,
+        std::bind(&MainWindow::cameraCallback, this, std::placeholders::_1));
 
+    odom_pub_ = node_->create_publisher<nav_msgs::msg::Odometry>("/odom", 10);
     joint_pub_ = node_->create_publisher<sensor_msgs::msg::JointState>("/joint_states", 20);
 
-    stateTimer = new QTimer(this);
-    connect(stateTimer, &QTimer::timeout, this, &MainWindow::updateStateRobot);
-    stateTimer->start(20); // 10 ms
+    tf_broadcaster_ = std::make_shared<tf2_ros::TransformBroadcaster>(node_);
 #endif
 /* =============================================================================== */
 
 /* ================ Rviz ================ */
-#if 1
+#if USE_RVIZ
     rviz = new RVizManager(app_, ui->rvizWidget, node_, this);
 
     rviz->initializeRViz();
@@ -89,64 +95,63 @@ MainWindow::MainWindow(QApplication *app, QWidget *parent)
 /* =============================================================================== */
 
 /* ================ Load Robot Model ================ */
-#if 1
+#if USE_LOAD_ROBOT
     robot = new RobotManager(this);
+    // Log
     connect(robot, &RobotManager::newLog, this, [=](QString text)
             { ui->textEdit_log->append(text); });
-
+    // Button
     connect(ui->btn_LoadRobot, &QPushButton::clicked, robot, &RobotManager::loadRobotModel);
 #endif
 /* =============================================================================== */
 
 /* ================ Connect lidar ================ */
-#if 1
+#if USE_LIDAR
     lidar = new LidarManager(this);
 
+    // Log
     connect(lidar, &LidarManager::newLog, this, [=](QString text)
             { ui->textEdit_log->append(text); });
-
+    // Button
     connect(ui->btnConnect_lidar, &QPushButton::clicked, lidar, &LidarManager::startLidar);
     connect(ui->btnStop_lidar, &QPushButton::clicked, lidar, &LidarManager::stopLidar);
 #endif
 /* =============================================================================== */
 
 /* ================ Connect camera ================ */
-#if 1
+#if USE_CAMERA
     camera = new Camera_Manager(this);
 
+    // Log
     connect(camera, &Camera_Manager::newLog, this, [=](QString text)
             { ui->textEdit_log->append(text); });
-
+    // Button
     connect(ui->btn_StartCamera, &QPushButton::clicked, camera, &Camera_Manager::startCamera);
     connect(ui->btn_StopCamera, &QPushButton::clicked, camera, &Camera_Manager::stopCamera);
-
-    camera_sub_ = node_->create_subscription<std_msgs::msg::Bool>(
-        "/camera_status",
-        10,
-        std::bind(&MainWindow::cameraCallback, this, std::placeholders::_1));
-
 #endif
     /* =============================================================================== */
 
 /* ================ Connect leg_follower ================ */
-#if 1
+#if USE_LEG_FOLLOWER
     person = new PersonManager(this);
 
+    // Log
     connect(person, &PersonManager::newLog, this, [=](QString text)
             { ui->textEdit_log->append(text); });
-
+    // Button
     connect(ui->btn_PerTracker, &QPushButton::clicked, person, &PersonManager::startPersonTracker);
     connect(ui->btn_StopTracker, &QPushButton::clicked, person, &PersonManager::stop);
 #endif
     /* =============================================================================== */
 
-/* ================ Slam ToolBox ================ */
-#if 1
+/* ================ Slam ToolBox and NAV2 ================ */
+#if USE_SLAM_AND_NAV2
     slam = new SlamManager(this);
 
+    // Log
     connect(slam, &SlamManager::newLog, this, [=](QString text)
             { ui->textEdit_log->append(text); });
-
+    // Button
     connect(ui->btn_SlamToolBox, &QPushButton::clicked, slam, &SlamManager::SlamToolBox);
     connect(ui->btn_SaveMap, &QPushButton::clicked, slam, &SlamManager::saveMap);
     connect(ui->checkBox_UseSimTime, &QCheckBox::toggled, slam, &SlamManager::checkUseSimTime);
@@ -157,7 +162,7 @@ MainWindow::MainWindow(QApplication *app, QWidget *parent)
 /* =============================================================================== */
 
 /* ================ UI Button ================ */
-#if 1
+#if USE_BUTTON_CONTROL
     /* btn rst pose */
     connect(ui->btn_RSTPose, &QPushButton::clicked, this, &MainWindow::resetPose);
 
@@ -255,10 +260,27 @@ void MainWindow::disconnectToESP32()
     }
 }
 
+void MainWindow::cameraCallback(const std_msgs::msg::Bool::SharedPtr msg)
+{
+    is_camera = msg->data;
+
+    if (!is_camera)
+    {
+        stopRobot();
+        ui->textEdit_log->append("Camera lost");
+        return;
+    }
+}
+
 void MainWindow::CmdVelCallback(const geometry_msgs::msg::Twist::SharedPtr msg)
 {
     linear_velocity = msg->linear.x;
     angular_velocity = msg->angular.z;
+
+#if USE_CAMERA_STATUS
+    if (!is_camera)
+        return;
+#endif
 
     // compute msg send to tcp
     double vR = linear_velocity + L / 2.0 * angular_velocity;
@@ -297,20 +319,6 @@ void MainWindow::odomCallback(const nav_msgs::msg::Odometry::SharedPtr msg)
     angular_velocity = msg->twist.twist.angular.z;
 }
 
-void MainWindow::cameraCallback(const std_msgs::msg::Bool::SharedPtr msg)
-{
-    is_camera = msg->data;
-
-    //    if(is_camera)
-    //    {
-    //        ui->textEdit_log->append("Camera OK");
-    //    }
-    //    else
-    //    {
-    //        ui->textEdit_log->append("Camera Lost");
-    //    }
-}
-
 void MainWindow::resetPose()
 {
     robot_x = 0.0;
@@ -328,15 +336,15 @@ void MainWindow::resetPose()
 
 void MainWindow::updateStateRobot()
 {
-    // if (!is_camera)
-    // {
-    //     stopRobot();
-    //     prev_x = robot_x;
-    //     prev_y = robot_y;
-    //     prev_theta = robot_theta;
-    //     //        ui->textEdit_log->append("Camera lost");
-    //     return;
-    // }
+#if USE_CAMERA_STATUS
+    if (!is_camera)
+    {
+        prev_x = robot_x;
+        prev_y = robot_y;
+        prev_theta = robot_theta;
+        return;
+    }
+#endif
 
     robot_x = odom_x + prev_x;
     robot_y = odom_y + prev_y;
@@ -351,7 +359,7 @@ void MainWindow::updateStateRobot()
 
     double dt = 0.02;
 
-#if 0
+#if USE_WHEEL_ODOM
     robot_x += linear_velocity * cos(theta) * dt;
     robot_y += linear_velocity * sin(theta) * dt;
     robot_theta += angular_velocity * dt;
@@ -362,22 +370,43 @@ void MainWindow::updateStateRobot()
     q.setRPY(0, 0, robot_theta);
 
     /* TF */
-    geometry_msgs::msg::TransformStamped t;
+    geometry_msgs::msg::TransformStamped tf;
 
-    t.header.stamp = node_->now();
-    t.header.frame_id = "odom";
-    t.child_frame_id = "base_footprint";
+    tf.header.stamp = node_->now();
+    tf.header.frame_id = "odom";
+    tf.child_frame_id = "base_footprint";
 
-    t.transform.translation.x = robot_x;
-    t.transform.translation.y = robot_y;
-    t.transform.translation.z = 0.0;
+    tf.transform.translation.x = robot_x;
+    tf.transform.translation.y = robot_y;
+    tf.transform.translation.z = 0.0;
 
-    t.transform.rotation.x = q.x();
-    t.transform.rotation.y = q.y();
-    t.transform.rotation.z = q.z();
-    t.transform.rotation.w = q.w();
+    tf.transform.rotation.x = q.x();
+    tf.transform.rotation.y = q.y();
+    tf.transform.rotation.z = q.z();
+    tf.transform.rotation.w = q.w();
 
-    tf_broadcaster_->sendTransform(t);
+    tf_broadcaster_->sendTransform(tf);
+
+    /* Publish Odom */
+    nav_msgs::msg::Odometry odom_msg;
+
+    odom_msg.header.stamp = node_->now();
+    odom_msg.header.frame_id = "odom";
+    odom_msg.child_frame_id = "base_footprint";
+
+    odom_msg.pose.pose.position.x = robot_x;
+    odom_msg.pose.pose.position.y = robot_y;
+    odom_msg.pose.pose.position.z = 0.0;
+
+    odom_msg.pose.pose.orientation.x = q.x();
+    odom_msg.pose.pose.orientation.y = q.y();
+    odom_msg.pose.pose.orientation.z = q.z();
+    odom_msg.pose.pose.orientation.w = q.w();
+
+    odom_msg.twist.twist.linear.x = linear_velocity;
+    odom_msg.twist.twist.angular.z = angular_velocity;
+
+    odom_pub_->publish(odom_msg);
 
     /* joint_states */
     sensor_msgs::msg::JointState joint_msg;
@@ -435,6 +464,13 @@ void MainWindow::updateMarkerArrayTopics()
 
 void MainWindow::moveForward()
 {
+#if USE_CAMERA_STATUS
+    if (!is_camera)
+    {
+        return;
+    }
+#endif
+
     double Lin_vel = ui->Slider_Lin->value();
 
     double vL = 0.001915 * Lin_vel + 0.00053;
@@ -455,6 +491,13 @@ void MainWindow::moveForward()
 
 void MainWindow::moveBack()
 {
+#if USE_CAMERA_STATUS
+    if (!is_camera)
+    {
+        return;
+    }
+#endif
+
     double Lin_vel = ui->Slider_Lin->value();
 
     double vL = -(0.001915 * Lin_vel + 0.00053);
@@ -475,6 +518,13 @@ void MainWindow::moveBack()
 
 void MainWindow::moveLeft()
 {
+#if USE_CAMERA_STATUS
+    if (!is_camera)
+    {
+        return;
+    }
+#endif
+
     double Lin_vel = ui->Slider_Lin->value();
 
     double vL = -(0.001915 * Lin_vel + 0.00053);
@@ -495,6 +545,13 @@ void MainWindow::moveLeft()
 
 void MainWindow::moveRight()
 {
+#if USE_CAMERA_STATUS
+    if (!is_camera)
+    {
+        return;
+    }
+#endif
+
     double Lin_vel = ui->Slider_Lin->value();
 
     double vL = 0.001915 * Lin_vel + 0.00053;

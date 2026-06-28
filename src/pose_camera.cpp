@@ -13,7 +13,7 @@ public:
     PoseOdomPublisher() : Node("pose_odom_publisher"), pipe_running_(false)
     {
         // Publisher /odom
-        odom_pub_ = this->create_publisher<nav_msgs::msg::Odometry>("/odom", 10);
+        odom_pub_ = this->create_publisher<nav_msgs::msg::Odometry>("/odom_camera", 10);
         status_pub_ = this->create_publisher<std_msgs::msg::Bool>("/camera_status", 10);
 
         // tìm camera
@@ -43,6 +43,8 @@ public:
         timer_ = this->create_wall_timer(
             std::chrono::milliseconds(50),
             std::bind(&PoseOdomPublisher::publish_odom, this));
+
+        last_frame_time_ = this->now();
     }
 
     ~PoseOdomPublisher()
@@ -78,10 +80,48 @@ private:
 
             if (!pipe_.poll_for_frames(&frames))
             {
-                publish_camera_status(false);
+                auto now = this->now();
+
+                // Chưa từng nhận frame nào
+                if (!first_frame_received_)
+                {
+                    RCLCPP_WARN_THROTTLE(this->get_logger(), *this->get_clock(),
+                                         2000,
+                                         "Waiting for first camera frames...");
+                    return;
+                }
+
+                // Đã từng nhận frame nhưng bị timeout
+                double dt = (now - last_frame_time_).seconds();
+
+                if (dt > 1.0)
+                {
+                    publish_camera_status(false);
+
+                    RCLCPP_ERROR(this->get_logger(), "Camera frame timeout -> shutdown");
+
+                    if (pipe_running_)
+                    {
+                        try
+                        {
+                            pipe_.stop();
+                            pipe_running_ = false;
+                        }
+                        catch (...)
+                        {
+                        }
+                    }
+
+                    rclcpp::shutdown();
+                }
+
                 return;
             }
+
             publish_camera_status(true);
+            
+            first_frame_received_ = true;
+            last_frame_time_ = this->now();
 
             auto f = frames.first_or_default(RS2_STREAM_POSE);
 
@@ -95,8 +135,8 @@ private:
 
             // Header
             odom_msg.header.stamp = this->now();
-            odom_msg.header.frame_id = "odom";
-            odom_msg.child_frame_id = "base_footprint";
+            odom_msg.header.frame_id = "odom_camera";
+            odom_msg.child_frame_id = "base_camera_link";
 
             // Position
             odom_msg.pose.pose.position.x = -pose_data.translation.z;
@@ -128,35 +168,22 @@ private:
 
             RCLCPP_ERROR(this->get_logger(), "RealSense error: %s", e.what());
 
-            try
+            if (pipe_running_)
             {
-                pipe_.stop();
+                try
+                {
+                    pipe_.stop();
+                    pipe_running_ = false;
+                }
+                catch (...)
+                {
+                }
             }
-            catch (...)
-            {
-            }
 
-            std::this_thread::sleep_for(std::chrono::seconds(1));
+            RCLCPP_ERROR(this->get_logger(), "Camera disconnected -> shutting down node");
 
-            try
-            {
-                rs2::config cfg;
-                cfg.enable_stream(RS2_STREAM_POSE, RS2_FORMAT_6DOF);
-                cfg.disable_stream(RS2_STREAM_FISHEYE, 1);
-                cfg.disable_stream(RS2_STREAM_FISHEYE, 2);
-
-                pipe_.start(cfg);
-
-                RCLCPP_INFO(this->get_logger(),
-                            "RealSense pipeline restarted");
-            }
-            catch (const std::exception &ex)
-            {
-
-                RCLCPP_ERROR(this->get_logger(),
-                             "Restart failed: %s",
-                             ex.what());
-            }
+            rclcpp::shutdown();
+            return;
         }
         catch (const std::exception &e)
         {
@@ -216,6 +243,8 @@ private:
     rclcpp::Publisher<nav_msgs::msg::Odometry>::SharedPtr odom_pub_;
     rclcpp::Publisher<std_msgs::msg::Bool>::SharedPtr status_pub_;
     rclcpp::TimerBase::SharedPtr timer_;
+    rclcpp::Time last_frame_time_;
+    bool first_frame_received_ = false;
 };
 
 int main(int argc, char *argv[])

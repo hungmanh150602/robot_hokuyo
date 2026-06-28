@@ -24,7 +24,6 @@
 #include <tf2_ros/transform_broadcaster.h>
 #include <tf2/LinearMath/Quaternion.h>
 
-
 #include "lidar/lidar_manager.h"
 #include "camera_manager.h"
 #include "person_manager.h"
@@ -32,7 +31,18 @@
 #include "slam/slam_manager.h"
 #include "robot/robot_manager.h"
 
-
+#define USE_CAMERA_STATUS       1
+#define USE_WHEEL_ODOM          0
+#define USE_TCP_SOCKET          1
+#define USE_ROS_TIMER           1
+#define USE_SUB_AND_PUB         1
+#define USE_RVIZ                1
+#define USE_LOAD_ROBOT          1
+#define USE_LIDAR               1
+#define USE_CAMERA              1
+#define USE_LEG_FOLLOWER        1
+#define USE_SLAM_AND_NAV2       1
+#define USE_BUTTON_CONTROL      1
 
 QT_BEGIN_NAMESPACE
 namespace Ui { class MainWindow; }
@@ -87,10 +97,10 @@ private:
 
     rclcpp::Node::SharedPtr node_;
     rclcpp::Subscription<geometry_msgs::msg::Twist>::SharedPtr cmd_vel_sub_;
-//    rclcpp::Publisher<nav_msgs::msg::Odometry>::SharedPtr odom_pub_;
     rclcpp::Subscription<nav_msgs::msg::Odometry>::SharedPtr odom_sub_;
     rclcpp::Subscription<std_msgs::msg::Bool>::SharedPtr camera_sub_;
     std::shared_ptr<tf2_ros::TransformBroadcaster> tf_broadcaster_;
+    rclcpp::Publisher<nav_msgs::msg::Odometry>::SharedPtr odom_pub_;
     rclcpp::Publisher<sensor_msgs::msg::JointState>::SharedPtr joint_pub_;
 
     /* Robot parameter */
