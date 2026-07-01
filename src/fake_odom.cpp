@@ -10,51 +10,33 @@
 #include "tf2_ros/transform_broadcaster.h"
 #include "tf2/LinearMath/Quaternion.h"
 
-
 class FakeOdomNode : public rclcpp::Node
 {
 public:
-
-    FakeOdomNode()
-    : Node("fake_odom_node")
+    FakeOdomNode() : Node("fake_odom_node")
     {
         cmd_sub_ = this->create_subscription<geometry_msgs::msg::Twist>(
             "/cmd_vel",
             10,
-            std::bind(
-                &FakeOdomNode::cmdCallback,
-                this,
-                std::placeholders::_1
-            )
-        );
+            std::bind(&FakeOdomNode::cmdCallback,
+                      this,
+                      std::placeholders::_1));
 
         odom_pub_ = this->create_publisher<nav_msgs::msg::Odometry>(
             "/odom",
-            10
-        );
+            10);
 
-        tf_broadcaster_ =
-            std::make_unique<tf2_ros::TransformBroadcaster>(*this);
+        tf_broadcaster_ = std::make_unique<tf2_ros::TransformBroadcaster>(*this);
 
         timer_ = this->create_wall_timer(
             std::chrono::milliseconds(20),
-            std::bind(
-                &FakeOdomNode::updateOdometry,
-                this
-            )
-        );
+            std::bind(&FakeOdomNode::updateOdometry, this));
 
-        RCLCPP_INFO(
-            this->get_logger(),
-            "Fake odom node started"
-        );
+        RCLCPP_INFO(this->get_logger(), "Fake odom node started");
     }
 
 private:
-
-    void cmdCallback(
-        const geometry_msgs::msg::Twist::SharedPtr msg
-    )
+    void cmdCallback(const geometry_msgs::msg::Twist::SharedPtr msg)
     {
         linear_velocity_ = msg->linear.x;
         angular_velocity_ = msg->angular.z;
@@ -74,17 +56,13 @@ private:
 
         theta_ += angular_velocity_ * dt;
 
-        //
         // Quaternion
-        //
         tf2::Quaternion q;
         q.setRPY(0, 0, theta_);
 
         auto now = this->get_clock()->now();
 
-        //
         // TF
-        //
         geometry_msgs::msg::TransformStamped t;
 
         t.header.stamp = now;
@@ -102,9 +80,7 @@ private:
 
         tf_broadcaster_->sendTransform(t);
 
-        //
         // Odom
-        //
         nav_msgs::msg::Odometry odom;
 
         odom.header.stamp = now;
@@ -127,21 +103,13 @@ private:
         odom_pub_->publish(odom);
     }
 
-    //
     // ROS
-    //
     rclcpp::Subscription<geometry_msgs::msg::Twist>::SharedPtr cmd_sub_;
-
     rclcpp::Publisher<nav_msgs::msg::Odometry>::SharedPtr odom_pub_;
-
-    std::unique_ptr<tf2_ros::TransformBroadcaster>
-        tf_broadcaster_;
-
+    std::unique_ptr<tf2_ros::TransformBroadcaster> tf_broadcaster_;
     rclcpp::TimerBase::SharedPtr timer_;
 
-    //
     // Robot state
-    //
     double x_ = 0.0;
     double y_ = 0.0;
     double theta_ = 0.0;
@@ -150,17 +118,11 @@ private:
     double angular_velocity_ = 0.0;
 };
 
-
-int main(int argc, char ** argv)
+int main(int argc, char **argv)
 {
     rclcpp::init(argc, argv);
-
-    auto node =
-        std::make_shared<FakeOdomNode>();
-
+    auto node = std::make_shared<FakeOdomNode>();
     rclcpp::spin(node);
-
     rclcpp::shutdown();
-
     return 0;
 }

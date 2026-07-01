@@ -41,7 +41,7 @@ if(NOT REALSENSE2_LIB OR NOT REALSENSE2_INCLUDE)
    message(FATAL_ERROR "RealSense2 not found. Please install librealsense2-dev")
 endif()
 
-# include
+# include directories
 include_directories(
   include
   include/lidar_hokuyo/c
@@ -120,8 +120,9 @@ target_compile_features(pose_camera PUBLIC c_std_99 cxx_std_17)
 
 ament_target_dependencies(pose_camera
  rclcpp
- geometry_msgs
  nav_msgs
+ tf2
+ tf2_ros
 )
 #--------------------------------------------------------------------
 
@@ -220,7 +221,6 @@ install(
     scripts/a_star.py
     scripts/path_follower.py
     scripts/AStar_Navigation.py
-    scripts/camera_detect.py
   DESTINATION lib/${PROJECT_NAME}
 )
 

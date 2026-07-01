@@ -45,7 +45,7 @@ MainWindow::MainWindow(QApplication *app, QWidget *parent)
         std::bind(&MainWindow::CmdVelCallback, this, std::placeholders::_1));
 
     odom_sub_ = node_->create_subscription<nav_msgs::msg::Odometry>(
-        "/odom_camera",
+        "/odom",
         20,
         std::bind(&MainWindow::odomCallback, this, std::placeholders::_1));
 
@@ -54,10 +54,7 @@ MainWindow::MainWindow(QApplication *app, QWidget *parent)
         10,
         std::bind(&MainWindow::cameraCallback, this, std::placeholders::_1));
 
-    odom_pub_ = node_->create_publisher<nav_msgs::msg::Odometry>("/odom", 10);
     joint_pub_ = node_->create_publisher<sensor_msgs::msg::JointState>("/joint_states", 20);
-
-    tf_broadcaster_ = std::make_shared<tf2_ros::TransformBroadcaster>(node_);
 #endif
 /* =============================================================================== */
 
@@ -321,17 +318,9 @@ void MainWindow::odomCallback(const nav_msgs::msg::Odometry::SharedPtr msg)
 
 void MainWindow::resetPose()
 {
-    robot_x = 0.0;
-    robot_y = 0.0;
-    robot_theta = 0.0;
-
     odom_x = 0.0;
     odom_y = 0.0;
     odom_theta = 0.0;
-
-    prev_x = 0.0;
-    prev_y = 0.0;
-    prev_theta = 0.0;
 }
 
 void MainWindow::updateStateRobot()
@@ -339,23 +328,16 @@ void MainWindow::updateStateRobot()
 #if USE_CAMERA_STATUS
     if (!is_camera)
     {
-        prev_x = robot_x;
-        prev_y = robot_y;
-        prev_theta = robot_theta;
         return;
     }
 #endif
 
-    robot_x = odom_x + prev_x;
-    robot_y = odom_y + prev_y;
-    robot_theta = odom_theta + prev_theta;
-
     int Lin_vel = ui->Slider_Lin->value();
 
     ui->lineEdit_Lin->setText(QString::number(Lin_vel));
-    ui->lineEditX->setText(QString::number(robot_x, 'f', 2));
-    ui->lineEditY->setText(QString::number(robot_y, 'f', 2));
-    ui->lineEditTheta->setText(QString::number(robot_theta, 'f', 2));
+    ui->lineEditX->setText(QString::number(odom_x, 'f', 2));
+    ui->lineEditY->setText(QString::number(odom_y, 'f', 2));
+    ui->lineEditTheta->setText(QString::number(odom_theta, 'f', 2));
 
     double dt = 0.02;
 
@@ -364,50 +346,6 @@ void MainWindow::updateStateRobot()
     robot_y += linear_velocity * sin(theta) * dt;
     robot_theta += angular_velocity * dt;
 #endif
-
-    /* Quaternion */
-    tf2::Quaternion q;
-    q.setRPY(0, 0, robot_theta);
-
-    /* TF */
-    geometry_msgs::msg::TransformStamped tf;
-
-    tf.header.stamp = node_->now();
-    tf.header.frame_id = "odom";
-    tf.child_frame_id = "base_footprint";
-
-    tf.transform.translation.x = robot_x;
-    tf.transform.translation.y = robot_y;
-    tf.transform.translation.z = 0.0;
-
-    tf.transform.rotation.x = q.x();
-    tf.transform.rotation.y = q.y();
-    tf.transform.rotation.z = q.z();
-    tf.transform.rotation.w = q.w();
-
-    tf_broadcaster_->sendTransform(tf);
-
-    /* Publish Odom */
-    nav_msgs::msg::Odometry odom_msg;
-
-    odom_msg.header.stamp = node_->now();
-    odom_msg.header.frame_id = "odom";
-    odom_msg.child_frame_id = "base_footprint";
-
-    odom_msg.pose.pose.position.x = robot_x;
-    odom_msg.pose.pose.position.y = robot_y;
-    odom_msg.pose.pose.position.z = 0.0;
-
-    odom_msg.pose.pose.orientation.x = q.x();
-    odom_msg.pose.pose.orientation.y = q.y();
-    odom_msg.pose.pose.orientation.z = q.z();
-    odom_msg.pose.pose.orientation.w = q.w();
-
-    odom_msg.twist.twist.linear.x = linear_velocity;
-    odom_msg.twist.twist.angular.z = angular_velocity;
-
-    odom_pub_->publish(odom_msg);
-
     /* joint_states */
     sensor_msgs::msg::JointState joint_msg;
 

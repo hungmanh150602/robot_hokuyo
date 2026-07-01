@@ -12,6 +12,9 @@
 #include "leg_detector/person_filter.hpp"
 #include "leg_detector/visualization.hpp"
 
+#include <fstream>
+#include <iomanip>
+
 class LegDetector : public rclcpp::Node
 {
 public:
@@ -32,11 +35,26 @@ public:
             "/cmd_vel",
             10);
 
+        log_file_.open("/home/lac/ros2_ws2/person_log.csv");
+
+        log_file_ << std::fixed << std::setprecision(3);
+
+        log_file_
+            << "time,num_persons,distance,angle\n";
+
         RCLCPP_INFO(this->get_logger(), "Leg Detector + Person follower started!");
+    }
+
+    ~LegDetector()
+    {
+        if (log_file_.is_open())
+            log_file_.close();
     }
 
 private:
     LegDetectorConfig config;
+    std::ofstream log_file_;
+    double last_log_time_ = 0.0;
 
     void loadParameters()
     {
@@ -103,6 +121,22 @@ private:
         // Distance + angle
         float distance = best_dist;
         float angle = std::atan2(y, x);
+
+        double now_time = this->now().seconds();
+
+        if (now_time - last_log_time_ >= 1.0)
+        {
+            float confidence = persons[best_idx].confidence;
+
+            log_file_
+                << now_time << ","
+                << persons.size() << ","
+                << distance << ","
+                << angle
+                << "\n";
+
+            last_log_time_ = now_time;
+        }
 
         // Controller
         float linear = config.kp_linear * (distance - config.target_distance);

@@ -26,4 +26,4 @@ ros2 run robot_hokuyo person_tracker_node --ros-args --params-file src/robot_hok
 
 =========================== run camera detect ==============================
 cd ~/ros2_ws2/src/robot_hokuyo/scripts
-python3 camera_detect.py
+python3 final_ver_cam.py

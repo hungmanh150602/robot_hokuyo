@@ -12,6 +12,10 @@
 #include "person_detector/person_filter.hpp"
 #include "person_detector/visualization.hpp"
 
+#include <fstream>
+#include <chrono>
+#include <iomanip>
+
 class PersonDetector : public rclcpp::Node
 {
 public:
@@ -37,11 +41,28 @@ public:
             "/cmd_vel",
             10);
 
+        log_file_.open("person_tracking_log.csv");
+
+        if (log_file_.is_open())
+        {
+            log_file_ << "time,num_persons,distance,angle\n";
+        }
+
         RCLCPP_INFO(this->get_logger(), "Leg Detector + Person follower started!");
+    }
+
+    ~PersonDetector()
+    {
+        if (log_file_.is_open())
+        {
+            log_file_.close();
+        }
     }
 
 private:
     LegDetectorConfig config;
+    std::ofstream log_file_;
+    double last_log_time_ = 0.0;
 
     void loadParameters()
     {
@@ -329,6 +350,29 @@ private:
 
         if (target)
         {
+            float dist = std::hypot(target->center.x, target->center.y);
+            float angle = std::atan2(target->center.y, target->center.x) * 180.0 / M_PI;
+
+            // Timestamp
+            double now_time = this->now().seconds();
+
+            if (now_time - last_log_time_ >= 1.0)
+            {
+                if (log_file_.is_open())
+                {
+                    log_file_ << now_time << ","
+                              << persons.size() << ","
+                              << dist << ","
+                              << angle
+                              << "\n";
+                }
+                last_log_time_ = now_time;
+            }
+
+            RCLCPP_INFO(this->get_logger(),
+                        "Tracked Person | Distance: %.3f m | Angle: %.2f deg",
+                        dist, angle);
+
             followTarget(target->center);
         }
         else

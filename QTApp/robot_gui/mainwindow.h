@@ -99,8 +99,6 @@ private:
     rclcpp::Subscription<geometry_msgs::msg::Twist>::SharedPtr cmd_vel_sub_;
     rclcpp::Subscription<nav_msgs::msg::Odometry>::SharedPtr odom_sub_;
     rclcpp::Subscription<std_msgs::msg::Bool>::SharedPtr camera_sub_;
-    std::shared_ptr<tf2_ros::TransformBroadcaster> tf_broadcaster_;
-    rclcpp::Publisher<nav_msgs::msg::Odometry>::SharedPtr odom_pub_;
     rclcpp::Publisher<sensor_msgs::msg::JointState>::SharedPtr joint_pub_;
 
     /* Robot parameter */
@@ -112,14 +110,6 @@ private:
     double odom_x = 0.0;
     double odom_y = 0.0;
     double odom_theta = 0.0;
-
-    double prev_x = 0.0;
-    double prev_y = 0.0;
-    double prev_theta = 0.0;
-
-    double robot_x = 0.0;
-    double robot_y = 0.0;
-    double robot_theta = 0.0;
 
     double linear_velocity = 0.0;
     double angular_velocity = 0.0;
