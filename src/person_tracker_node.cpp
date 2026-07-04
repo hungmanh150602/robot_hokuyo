@@ -70,13 +70,14 @@ private:
         this->declare_parameter("cluster_eps", 0.06);
 
         // CONTROLLER
-        this->declare_parameter("target_distance", 0.6);
-        this->declare_parameter("kp_linear", 0.8);
+        this->declare_parameter("target_distance", 1.0);
+        this->declare_parameter("kp_linear", 1.8);
         this->declare_parameter("kp_angular", 2.50);
-        this->declare_parameter("max_linear_veclocity", 0.05);
-        this->declare_parameter("max_angular_veclocity", 0.6);
+        this->declare_parameter("max_linear_veclocity", 0.18);
+        this->declare_parameter("max_angular_veclocity", 0.5);
         this->declare_parameter("stop_radius", 0.2);
         this->declare_parameter("danger_radius", 0.2);
+        this->declare_parameter("angle_stop", 0.35);
 
         // Load value
         config.cluster_eps = this->get_parameter("cluster_eps").as_double();
@@ -87,6 +88,7 @@ private:
         config.max_angular_veclocity = this->get_parameter("max_angular_veclocity").as_double();
         config.stop_radius = this->get_parameter("stop_radius").as_double();
         config.danger_radius = this->get_parameter("danger_radius").as_double();
+        config.angle_stop = this->get_parameter("angle_stop").as_double();
     }
 
     rclcpp::Subscription<sensor_msgs::msg::LaserScan>::SharedPtr scan_sub_;
@@ -260,6 +262,11 @@ private:
         if (std::abs(dist - config.target_distance) < config.stop_radius)
         {
             linear = 0.0f;
+        }
+
+        if(std::abs(angle) < config.angle_stop)
+        {
+            angular = 0.0f;
         }
 
         if (dist < config.danger_radius)

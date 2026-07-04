@@ -23,9 +23,7 @@ void PersonManager::startPersonTracker()
     QString command =
             src_ros + " && "
             + src_ws + " && "
-            + persontracker_run
-            + " --ros-args"
-            " --params-file " + persontracker_fileName;
+            + persontracker_run;
 
     QStringList arguments;
 
@@ -55,5 +53,5 @@ void PersonManager::stop()
         "pkill",
         QStringList()
             << "-f"
-            << "leg_follower_node");
+            << "person_detector");
 }

@@ -160,43 +160,15 @@ void RVizManager::initializeRViz()
     #endif
 }
 
-void RVizManager::zoomIn()
-{
-    auto view = manager_->getViewManager()->getCurrent();
-
-    if(view)
-    {
-        float dist = view->subProp("Distance")->getValue().toFloat();
-        dist += 1.0;
-        if(dist < 0.5)
-            dist = 0.5;
-
-        view->subProp("Distance")->setValue(dist);
-    }
-}
-
-void RVizManager::zoomOut()
-{
-    auto view = manager_->getViewManager()->getCurrent();
-
-    if(view)
-    {
-        float dist = view->subProp("Distance")->getValue().toFloat();
-        dist -= 1.0;
-
-        view->subProp("Distance")->setValue(dist);
-    }
-}
-
 //void RVizManager::rotateLeft()
 //{
 //    auto view = manager_->getViewManager()->getCurrent();
-
+//
 //    if(view)
 //    {
 //        float yaw = view->subProp("Yaw")->getValue().toFloat();
 //        yaw -= 0.1;
-
+//
 //        view->subProp("Yaw")->setValue(yaw);
 //    }
 //}

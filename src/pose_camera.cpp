@@ -6,6 +6,7 @@
 #include <tf2_ros/transform_broadcaster.h>
 #include <tf2_ros/static_transform_broadcaster.h>
 #include <geometry_msgs/msg/transform_stamped.hpp>
+#include <sensor_msgs/msg/joint_state.hpp>
 
 #include <iostream>
 #include <iomanip>
@@ -21,6 +22,7 @@ public:
         status_pub_ = this->create_publisher<std_msgs::msg::Bool>("/camera_status", 10);
         tf_broadcaster_ = std::make_shared<tf2_ros::TransformBroadcaster>(this);
         static_tf_broadcaster_ = std::make_shared<tf2_ros::StaticTransformBroadcaster>(this);
+        joint_pub_ = this->create_publisher<sensor_msgs::msg::JointState>("/joint_states", 10);
 
         // map -> odom
         geometry_msgs::msg::TransformStamped static_tf;
@@ -187,6 +189,38 @@ private:
             tf_msg.transform.rotation = odom_msg.pose.pose.orientation;
 
             tf_broadcaster_->sendTransform(tf_msg);
+
+            // Publish Joint State
+            sensor_msgs::msg::JointState joint_msg;
+
+            joint_msg.header.stamp = odom_msg.header.stamp;
+            joint_msg.name.push_back("left_joint");
+            joint_msg.name.push_back("right_joint");
+
+            static double left_pos = 0.0;
+            static double right_pos = 0.0;
+
+            double dt = 0.05; // timer 50ms
+
+            double linear_vel = odom_msg.twist.twist.linear.x;
+            double angular_vel = odom_msg.twist.twist.angular.z;
+
+            double wheel_separation = 0.25;
+            double wheel_radius = 0.0325;
+
+            double left_wheel_vel = (linear_vel - angular_vel * wheel_separation / 2.0) / wheel_radius;
+            double right_wheel_vel = (linear_vel + angular_vel * wheel_separation / 2.0) / wheel_radius;
+
+            left_pos += left_wheel_vel * dt;
+            right_pos += right_wheel_vel * dt;
+
+            joint_msg.position.push_back(left_pos);
+            joint_msg.position.push_back(right_pos);
+
+            joint_msg.velocity.push_back(left_wheel_vel);
+            joint_msg.velocity.push_back(right_wheel_vel);
+
+            joint_pub_->publish(joint_msg);
         }
         catch (const rs2::error &e)
         {
@@ -263,6 +297,7 @@ private:
     rclcpp::Publisher<std_msgs::msg::Bool>::SharedPtr status_pub_;
     std::shared_ptr<tf2_ros::TransformBroadcaster> tf_broadcaster_;
     std::shared_ptr<tf2_ros::StaticTransformBroadcaster> static_tf_broadcaster_;
+    rclcpp::Publisher<sensor_msgs::msg::JointState>::SharedPtr joint_pub_;
     rclcpp::TimerBase::SharedPtr timer_;
     rclcpp::Time last_frame_time_;
     bool first_frame_received_ = false;

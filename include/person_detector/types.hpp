@@ -26,6 +26,7 @@ struct LegDetectorConfig
     float max_angular_veclocity;
     float stop_radius;
     float danger_radius;
+    float angle_stop;
 };
 
 struct Point2D

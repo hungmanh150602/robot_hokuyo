@@ -18,7 +18,7 @@
 class LegDetector : public rclcpp::Node
 {
 public:
-    LegDetector() : Node("leg_detector")
+    LegDetector() : Node("person_detector")
     {
         loadParameters();
 

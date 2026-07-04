@@ -46,12 +46,14 @@ include_directories(
   include
   include/lidar_hokuyo/c
   QTApp/robot_gui
+  QTApp/robot_gui/tcp_client
   QTApp/robot_gui/camera
   QTApp/robot_gui/lidar
   QTApp/robot_gui/person_tracker
   QTApp/robot_gui/robot
   QTApp/robot_gui/rviz
   QTApp/robot_gui/slam
+  QTApp/robot_gui/nav2
 )
 
 # ===================== build publish_lidar =====================
@@ -84,9 +86,6 @@ add_executable(tcp_client
 ament_target_dependencies(tcp_client
   rclcpp
   geometry_msgs
-  nav_msgs
-  tf2
-  tf2_ros
 )
 #--------------------------------------------------------------------
 
@@ -121,6 +120,7 @@ target_compile_features(pose_camera PUBLIC c_std_99 cxx_std_17)
 ament_target_dependencies(pose_camera
  rclcpp
  nav_msgs
+ sensor_msgs
  tf2
  tf2_ros
 )
@@ -167,12 +167,14 @@ add_executable(robot_gui
   QTApp/robot_gui/main.cpp
   QTApp/robot_gui/mainwindow.cpp
   QTApp/robot_gui/mainwindow.ui
+  QTApp/robot_gui/tcp_client/tcp_manager.cpp
   QTApp/robot_gui/camera/camera_manager.cpp
   QTApp/robot_gui/lidar/lidar_manager.cpp
   QTApp/robot_gui/person_tracker/person_manager.cpp
   QTApp/robot_gui/robot/robot_manager.cpp
   QTApp/robot_gui/rviz/rviz_manager.cpp
   QTApp/robot_gui/slam/slam_manager.cpp
+  QTApp/robot_gui/nav2/NAV2_manager.cpp
 )
 
 target_link_libraries(robot_gui
@@ -191,9 +193,6 @@ ament_target_dependencies(robot_gui
   rclcpp
   geometry_msgs
   nav_msgs
-  sensor_msgs
-  tf2
-  tf2_ros
 
   rviz_common
   rviz_default_plugins

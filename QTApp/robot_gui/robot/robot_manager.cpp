@@ -5,33 +5,19 @@ RobotManager::RobotManager(QObject *parent)
     : QObject(parent)
 {
     robot_process_ = new QProcess(this);
-    map_tf_process_ = new QProcess(this);
 
     #if 1
     robot_process_->setProcessChannelMode(QProcess::MergedChannels);
-    map_tf_process_->setProcessChannelMode(QProcess::MergedChannels);  // read all: stdout stderr
 
     connect(robot_process_, &QProcess::readyRead, this, [=]()
     {
         emit newLog(QString::fromLocal8Bit(robot_process_->readAll()));
-    });
-
-    connect(map_tf_process_, &QProcess::readyRead, this, [=]()
-    {
-        emit newLog(QString::fromLocal8Bit(map_tf_process_->readAll()));
     });
     #endif
 }
 
 void RobotManager::loadRobotModel()
 {
-    QString tf_command =
-        src_ros + " && "
-        "ros2 run tf2_ros static_transform_publisher "
-        "0 0 0 0 0 0 map odom";
-
-    map_tf_process_->start("bash", QStringList() << "-c" << tf_command);
-
     if(robot_fileName.isEmpty())
     {
         return;
@@ -47,7 +33,7 @@ void RobotManager::loadRobotModel()
     QString command;
     QString urdfFile = "/tmp/robot.urdf";
 
-    #if 1 /* Xacro */
+    #if USE_XACRO_FILE /* Xacro */
     command = src_ros + " && "
               + src_ws + " && "
               "xacro " + robot_fileName + " > " + urdfFile + " && "
@@ -81,21 +67,4 @@ void RobotManager::stop()
         QStringList()
             << "-f"
             << "robot_state_publisher");
-
-    if(map_tf_process_->state() != QProcess::NotRunning)
-    {
-        map_tf_process_->terminate();
-
-        if(!map_tf_process_->waitForFinished(3000))
-        {
-            map_tf_process_->kill();
-        }
-    }
-
-    QProcess::execute(
-        "pkill",
-        QStringList()
-            << "-f"
-            << "static_transform_publisher");
-    emit newLog("Robot Stop SUCCESSFUL!!!");
 }

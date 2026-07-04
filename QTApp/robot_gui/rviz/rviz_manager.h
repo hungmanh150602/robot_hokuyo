@@ -38,8 +38,6 @@ public:
 
     void initializeRViz();
 
-    void zoomIn();
-    void zoomOut();
     void topView();
     void resetRViz();
 
