@@ -32,6 +32,15 @@ ros2 lifecycle set /amcl activate
 # Chạy NAV2
 ros2 launch nav2_bringup navigation_launch.py params_file:=/home/user_name/work_space/src/robot_hokuyo/nav2_params.yaml
 
+# Tính năng đi theo người dùng
+Để có thể sử dụng tính năng đi theo người dùng, trước tiên cần tắt node pose_camera vì node này sẽ xung đột kết nối camera với node nhận diện người dùng camera
+Vẫn giữ node publish_camera và tcp_client
+# Chạy node nhận diện người dùng camera
+cd ~/work_space/src/robot_hokuyo/scripts
+python3 final_ver_cam.py
+# Chạy node theo dõi người
+ros2 run robot_hokuyo person_tracker_node --ros-args --params-file /home/user_name/work_space/src/robot_hokuyo/leg_detector.yaml
+
 # Cách 2: Chạy các tác vụ trên bằng cách sử dụng giao diện
 # =============== run gui app =============== #
 ros2 run robot_hokuyo robot_gui
