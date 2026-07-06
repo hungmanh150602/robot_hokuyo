@@ -1,26 +1,48 @@
-person_detector:
+leg_detector:
   ros__parameters:
-    #------------------------------------------------------
     # CLUSTERING
-    #------------------------------------------------------
     cluster_eps: 0.06
     # min_cluster_points: 5
     # max_angle_gap: 20
     # adaptive_eps_gain: 1.5
     # adaptive_eps_offset: 0.01
-    #------------------------------------------------------
+
     # GEOMETRY FILTER
-    #------------------------------------------------------
     # min_cluster_width: 0.03
     # max_cluster_width: 0.30
-    #------------------------------------------------------
+
     # VISUALIZATION
-    #------------------------------------------------------
     # person_marker_hight: 0.20
     # person_marker_z: 0.80
-    #------------------------------------------------------
+
     # Controller
-    #------------------------------------------------------
+    target_distance: 1.0
+    kp_linear: 1.80
+    kp_angular: 2.50
+    max_linear_veclocity: 0.18
+    max_angular_veclocity: 0.5
+    stop_radius: 0.2
+    danger_radius: 0.2
+    angle_stop: 0.35
+
+person_detector:
+  ros__parameters:
+    # CLUSTERING
+    cluster_eps: 0.06
+    # min_cluster_points: 5
+    # max_angle_gap: 20
+    # adaptive_eps_gain: 1.5
+    # adaptive_eps_offset: 0.01
+
+    # GEOMETRY FILTER
+    # min_cluster_width: 0.03
+    # max_cluster_width: 0.30
+    
+    # VISUALIZATION
+    # person_marker_hight: 0.20
+    # person_marker_z: 0.80
+    
+    # Controller
     target_distance: 1.0
     kp_linear: 1.80
     kp_angular: 2.50

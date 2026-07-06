@@ -8,6 +8,7 @@ import os
 import time
 from datetime import datetime
 from geometry_msgs.msg import Point
+from std_msgs.msg import Bool
 import rclpy
 from rclpy.node import Node
 
@@ -20,6 +21,17 @@ pub = node.create_publisher(
     Point,
     "/person_detection",
     10)
+status_pub = node.create_publisher(
+    Bool,
+    "/camera_status",
+    10)
+
+
+def publish_camera_status(is_ready: bool) -> None:
+    msg = Bool()
+    msg.data = is_ready
+    status_pub.publish(msg)
+    rclpy.spin_once(node, timeout_sec=0.01)
 
 # ==================================================
 # 0. KHỞI TẠO MÔ HÌNH AI
@@ -141,12 +153,14 @@ try:
     while True:
         frames = pipe.poll_for_frames()
         if not frames:
+            publish_camera_status(False)
             time.sleep(0.01)
             continue
             
         f1 = frames.get_fisheye_frame(1)
         f2 = frames.get_fisheye_frame(2)
         if not f1 or not f2:
+            publish_camera_status(False)
             continue
             
         current_time = time.time()
@@ -154,6 +168,8 @@ try:
             found_person = False
             last_process_time = current_time
             
+            publish_camera_status(True)
+
             # --- Đọc ảnh gốc ---
             img_left_raw = np.asanyarray(f1.get_data())   # 848x800, grayscale
             img_right_raw = np.asanyarray(f2.get_data())
@@ -177,8 +193,6 @@ try:
             blob = cv2.dnn.blobFromImage(img_rgb, 0.007843, (300, 300), 127.5)
             net.setInput(blob)
             detections = net.forward()
-            
-            found_person = False
             
             for i in range(detections.shape[2]):
                 confidence = detections[0, 0, i, 2]
@@ -295,6 +309,8 @@ finally:
     print(f"  - Log file: {log_filename}")
     print(f"  - CSV file: {csv_filename}")
     
+    publish_camera_status(False)
+
     pipe.stop()
     
     node.destroy_node()

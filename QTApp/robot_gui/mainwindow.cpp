@@ -129,7 +129,7 @@ MainWindow::MainWindow(QApplication *app, QWidget *parent)
 #endif
 /* =============================================================================== */
 
-/* ================ Connect leg_follower ================ */
+/* ================ Connect person tracker ================ */
 #if USE_LEG_FOLLOWER
     person = new PersonManager(this);
 
@@ -137,6 +137,7 @@ MainWindow::MainWindow(QApplication *app, QWidget *parent)
     connect(person, &PersonManager::newLog, this, [=](QString text)
             { ui->textEdit_log->append(text); });
     // Button
+    connect(ui->btn_CameraDetect, &QPushButton::clicked, person, &PersonManager::startCameraDetection);
     connect(ui->btn_PerTracker, &QPushButton::clicked, person, &PersonManager::startPersonTracker);
     connect(ui->btn_StopTracker, &QPushButton::clicked, person, &PersonManager::stop);
 #endif
@@ -171,12 +172,18 @@ MainWindow::MainWindow(QApplication *app, QWidget *parent)
             {
                 if (text == "Home")
                 {
-                    sendNavGoal(0.0, 0.0, 0.0);
+                    x_goal = 0.0;
+                    y_goal = 0.0;
+                    yaw_goal = 0.0;
                 }
                 else if (text == "Corner")
                 {
-                    sendNavGoal(3.6, 1.2, M_PI / 2.0);
+                    x_goal = 3.6;
+                    y_goal = 1.2;
+                    yaw_goal = M_PI / 2.0;
                 } });
+
+    connect(ui->btn_SendGoal, &QPushButton::clicked, this, &MainWindow::sendNavGoal);
     connect(ui->btn_CancelGoal, &QPushButton::clicked, nav2, &NAV2Manager::cancelnav2);
 #endif
 /* =============================================================================== */
@@ -375,19 +382,19 @@ void MainWindow::updateMarkerArrayTopics()
     ui->comboBox_MarkerArr->addItems(topics);
 }
 
-void MainWindow::sendNavGoal(double x, double y, double yaw)
+void MainWindow::sendNavGoal()
 {
     geometry_msgs::msg::PoseStamped goal;
 
     goal.header.stamp = node_->now();
     goal.header.frame_id = "map";
 
-    goal.pose.position.x = x;
-    goal.pose.position.y = y;
+    goal.pose.position.x = x_goal;
+    goal.pose.position.y = y_goal;
     goal.pose.position.z = 0.0;
 
     tf2::Quaternion q;
-    q.setRPY(0, 0, yaw);
+    q.setRPY(0, 0, yaw_goal);
 
     goal.pose.orientation.x = q.x();
     goal.pose.orientation.y = q.y();
@@ -397,9 +404,9 @@ void MainWindow::sendNavGoal(double x, double y, double yaw)
     goal_pub_->publish(goal);
 
     ui->textEdit_log->append(QString("Send Goal: x=%1 y=%2 yaw=%3")
-                                .arg(x)
-                                .arg(y)
-                                .arg(yaw));
+                                .arg(x_goal)
+                                .arg(y_goal)
+                                .arg(yaw_goal));
 }
 
 void MainWindow::moveForward()

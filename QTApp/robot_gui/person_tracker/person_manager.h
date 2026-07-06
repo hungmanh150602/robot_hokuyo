@@ -11,6 +11,7 @@ class PersonManager : public QObject
 public:
     explicit PersonManager(QObject *parent);
 
+    void startCameraDetection();
     void startPersonTracker();
     void stop();
 
@@ -19,6 +20,7 @@ signals:
 
 private:
     QProcess *personTracker_process_;
+    QProcess *cameraDetection_process_;
 
 };
 

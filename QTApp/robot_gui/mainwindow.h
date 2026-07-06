@@ -68,7 +68,7 @@ private slots:
     void moveBackRight();
     void stopRobot();
 
-    void sendNavGoal(double x, double y, double yaw);
+    void sendNavGoal();
 
     void killAll();
 
@@ -108,5 +108,9 @@ private:
     double right_omega = 0.0;
     double left_wheel_angle = 0.0;
     double right_wheel_angle = 0.0;
+
+    double x_goal = 0.0;
+    double y_goal = 0.0;
+    double yaw_goal = 0.0;
 };
 #endif // MAINWINDOW_H

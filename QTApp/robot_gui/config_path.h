@@ -32,8 +32,7 @@ const QString nav2_runn = "ros2 launch nav2_bringup navigation_launch.py params_
 
 const QString slam_run = "ros2 launch slam_toolbox online_async_launch.py slam_params_file:=/home/" + user_name + "/" + work_space + "/src/robot_hokuyo/mapper_params_online_sync.yaml";
 
-// cd ~/ros2_ws2/src/robot_hokuyo/scripts
-// python3 final_ver_cam.py
+const QString camera_detect_run = "cd ~/" + work_space + "/src/robot_hokuyo/scripts && python3 final_ver_cam.py";
 
 const QString persontracker_run = "ros2 run robot_hokuyo person_tracker_node --ros-args --params-file /home/" + user_name + "/" + work_space + "/src/robot_hokuyo/leg_detector.yaml";
 

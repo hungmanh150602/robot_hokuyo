@@ -172,10 +172,10 @@ private:
 
     void cmdCallback(const geometry_msgs::msg::Twist::SharedPtr msg)
     {
-        // if (!is_camera)
-        // {
-        //     return;
-        // }
+        if (!is_camera)
+        {
+            return;
+        }
         linear_velocity_ = msg->linear.x;
         angular_velocity_ = msg->angular.z;
 
