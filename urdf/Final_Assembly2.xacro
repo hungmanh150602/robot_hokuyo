@@ -278,7 +278,7 @@
       <right_joint>right_joint</right_joint>
 
       <!-- kinematics -->
-      <wheel_separation>0.236</wheel_separation>
+      <wheel_separation>0.25</wheel_separation>
       <wheel_diameter>0.065</wheel_diameter>
 
       <!-- limits -->

@@ -124,7 +124,7 @@ visualization_msgs::msg::MarkerArray createMarkers(const std::vector<Cluster> &c
 
     if (camera_detected)
     {
-        text.text = "CAMERA DETECT";
+        text.text = "PERSON DETECTED";
 
         text.color.r = 0.0f;
         text.color.g = 1.0f;

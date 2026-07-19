@@ -29,7 +29,7 @@ person_detector:
   ros__parameters:
     # CLUSTERING
     cluster_eps: 0.06
-    # min_cluster_points: 5
+    # min_pts: 5
     # max_angle_gap: 20
     # adaptive_eps_gain: 1.5
     # adaptive_eps_offset: 0.01

@@ -75,6 +75,7 @@ public:
 
     ~PoseOdomPublisher()
     {
+        publish_camera_status(false);
         if (pipe_running_)
         {
             try

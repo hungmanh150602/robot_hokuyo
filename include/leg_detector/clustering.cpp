@@ -9,8 +9,7 @@ struct PointCloudAdaptor
 {
     const std::vector<Point2D> &pts;
 
-    PointCloudAdaptor(
-        const std::vector<Point2D> &points)
+    PointCloudAdaptor(const std::vector<Point2D> &points)
         : pts(points)
     {
     }
@@ -20,9 +19,7 @@ struct PointCloudAdaptor
         return pts.size();
     }
 
-    inline float kdtree_get_pt(
-        const size_t idx,
-        const size_t dim) const
+    inline float kdtree_get_pt(const size_t idx, const size_t dim) const
     {
         return (dim == 0) ? pts[idx].x : pts[idx].y;
     }
@@ -39,10 +36,9 @@ using KDTree = nanoflann::KDTreeSingleIndexAdaptor<
     PointCloudAdaptor,
     2>;
 
-std::vector<Cluster> createClusters(
-    const std::vector<Point2D> &points,
-    float base_eps,
-    float angle_increment)
+std::vector<Cluster> createClusters(const std::vector<Point2D> &points,
+                                    float base_eps,
+                                    float angle_increment)
 {
     std::vector<Cluster> clusters;
 
@@ -54,10 +50,9 @@ std::vector<Cluster> createClusters(
     // KDTree
     PointCloudAdaptor adaptor(points);
 
-    KDTree tree(
-        2,
-        adaptor,
-        nanoflann::KDTreeSingleIndexAdaptorParams(10));
+    KDTree tree(2,
+                adaptor,
+                nanoflann::KDTreeSingleIndexAdaptorParams(10));
 
     tree.buildIndex();
 
@@ -101,11 +96,10 @@ std::vector<Cluster> createClusters(
 
             float query_pt[2] = {points[i].x, points[i].y};
 
-            tree.radiusSearch(
-                query_pt,
-                radius_sq,
-                matches,
-                params);
+            tree.radiusSearch(query_pt,
+                              radius_sq,
+                              matches,
+                              params);
 
             for (const auto &m : matches)
             {
@@ -194,9 +188,7 @@ std::vector<Cluster> createClusters(
             continue;
 
         // Compute center
-        cluster.center =
-            computeCenter(
-                cluster.points);
+        cluster.center = computeCenter(cluster.points);
 
         // Bounding box
         float min_x = 1e9f;

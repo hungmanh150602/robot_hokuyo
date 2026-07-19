@@ -1,0 +1,301 @@
+#include <librealsense2/rs.hpp>
+#include <rclcpp/rclcpp.hpp>
+#include <nav_msgs/msg/odometry.hpp>
+#include <std_msgs/msg/bool.hpp>
+#include <tf2_ros/transform_broadcaster.h>
+#include <tf2_ros/static_transform_broadcaster.h>
+#include <geometry_msgs/msg/transform_stamped.hpp>
+#include <sensor_msgs/msg/joint_state.hpp>
+
+#include <iostream>
+#include <iomanip>
+#include <cmath>
+#include <mutex>
+#include <atomic>
+#include <sstream>
+
+class PoseOdomPublisher : public rclcpp::Node
+{
+public:
+    PoseOdomPublisher() : Node("pose_odom_publisher"), pipe_running_(false)
+    {
+        // Publishers
+        odom_pub_ = this->create_publisher<nav_msgs::msg::Odometry>("/odom", 10);
+        status_pub_ = this->create_publisher<std_msgs::msg::Bool>("/camera_status", 10);
+        tf_broadcaster_ = std::make_shared<tf2_ros::TransformBroadcaster>(this);
+        static_tf_broadcaster_ = std::make_shared<tf2_ros::StaticTransformBroadcaster>(this);
+        joint_pub_ = this->create_publisher<sensor_msgs::msg::JointState>("/joint_states", 10);
+
+        // Static TF: map -> odom
+        geometry_msgs::msg::TransformStamped static_tf;
+        static_tf.header.stamp = this->now();
+        static_tf.header.frame_id = "map";
+        static_tf.child_frame_id = "odom";
+        static_tf.transform.rotation.w = 1.0;
+        static_tf_broadcaster_->sendTransform(static_tf);
+
+        // Khởi tạo Camera lần đầu
+        init_camera();
+
+        // Watchdog kiểm tra ngắt kết nối (Mỗi 500ms)
+        watchdog_timer_ = this->create_wall_timer(
+            std::chrono::milliseconds(500),
+            std::bind(&PoseOdomPublisher::check_timeout, this));
+            
+        // Định kỳ báo cáo tiến trình còn sống
+        heartbeat_timer_ = this->create_wall_timer(
+            std::chrono::seconds(2),
+            [this]() {
+                RCLCPP_INFO(this->get_logger(), "[HEARTBEAT] Node 'pose_odom_publisher' vẫn đang SỐNG ổn định.");
+            });
+    }
+
+    ~PoseOdomPublisher()
+    {
+        if (pipe_running_)
+        {
+            try { pipe_.stop(); }
+            catch (const std::exception &e) {
+                RCLCPP_ERROR(this->get_logger(), "Error stopping pipeline: %s", e.what());
+            }
+        }
+    }
+
+private:
+    // --- HÀM KHỞI TẠO & KẾT NỐI LẠI CAMERA ---
+    void init_camera()
+    {
+        try {
+            std::string serial;
+            if (!find_device_with_pose_stream(serial)) {
+                RCLCPP_ERROR_THROTTLE(this->get_logger(), *this->get_clock(), 2000, "Không tìm thấy thiết bị RealSense T265. Sẽ thử lại...");
+                return; // Thoát ra để Watchdog gọi lại sau
+            }
+
+            rs2::config cfg;
+            if (!serial.empty())
+                cfg.enable_device(serial);
+
+            cfg.disable_all_streams();
+            cfg.enable_stream(RS2_STREAM_POSE, RS2_FORMAT_6DOF);
+
+            last_frame_time_ = this->now();
+            first_frame_received_ = false;
+
+            pipe_.start(cfg, [this](rs2::frame f) {
+                process_pose_frame(f);
+            });
+            pipe_running_ = true;
+
+            RCLCPP_INFO(this->get_logger(), "[PHỤC HỒI] Kết nối Camera thành công. Bắt đầu luồng dữ liệu.");
+        } catch (const std::exception &e) {
+            RCLCPP_ERROR(this->get_logger(), "Lỗi khởi tạo Camera: %s", e.what());
+        }
+    }
+
+    void publish_camera_status(bool status)
+    {
+        std_msgs::msg::Bool msg;
+        msg.data = status;
+        status_pub_->publish(msg);
+    }
+
+    void process_pose_frame(const rs2::frame& f)
+    {
+        auto pose_frame = f.as<rs2::pose_frame>();
+        if (!pose_frame) return;
+
+        auto pose_data = pose_frame.get_pose_data();
+        auto now_time = this->now();
+
+        RCLCPP_INFO_THROTTLE(this->get_logger(), *this->get_clock(), 1000, 
+            "[CAMERA-IN] Nhận gói dữ liệu thành công từ Camera.");
+
+        // --- BỘ LỌC HẠ TẦN SỐ DỮ LIỆU ĐỂ TIẾT KIỆM CPU ---
+        const int THROTTLE_RATE = 5;
+        static int frame_counter = 0;
+        if (++frame_counter % THROTTLE_RATE != 0) {
+            return; 
+        }
+        // ------------------------------------------------
+
+        double dt = (now_time - last_frame_time_).seconds();
+        if (!first_frame_received_) {
+            dt = 0.0;
+            first_frame_received_ = true;
+            publish_camera_status(true);
+        }
+        last_frame_time_ = now_time;
+
+        // 1. Khởi tạo & Gán dữ liệu /odom
+        nav_msgs::msg::Odometry odom_msg;
+        odom_msg.header.stamp = now_time;
+        odom_msg.header.frame_id = "odom";
+        odom_msg.child_frame_id = "base_footprint";
+
+        odom_msg.pose.pose.position.x = -pose_data.translation.z;
+        odom_msg.pose.pose.position.y = -pose_data.translation.x;
+        odom_msg.pose.pose.position.z = pose_data.translation.y;
+
+        odom_msg.pose.pose.orientation.x = -pose_data.rotation.z;
+        odom_msg.pose.pose.orientation.y = -pose_data.rotation.x;
+        odom_msg.pose.pose.orientation.z = pose_data.rotation.y;
+        odom_msg.pose.pose.orientation.w = pose_data.rotation.w;
+
+        odom_msg.twist.twist.linear.x = -pose_data.velocity.z;
+        odom_msg.twist.twist.linear.y = -pose_data.velocity.x;
+        odom_msg.twist.twist.linear.z = pose_data.velocity.y;
+
+        odom_msg.twist.twist.angular.x = -pose_data.angular_velocity.z;
+        odom_msg.twist.twist.angular.y = -pose_data.angular_velocity.x;
+        odom_msg.twist.twist.angular.z = pose_data.angular_velocity.y;
+
+        // PUBLISH ODOM
+        odom_pub_->publish(odom_msg);
+        
+        RCLCPP_INFO_THROTTLE(this->get_logger(), *this->get_clock(), 1000,
+            "[ROS2-PUB] Đang PUBLISH | X: %.3f, Y: %.3f | V: %.3f, W: %.3f",
+            odom_msg.pose.pose.position.x, odom_msg.pose.pose.position.y,
+            odom_msg.twist.twist.linear.x, odom_msg.twist.twist.angular.z);
+
+        // 2. Publish /tf
+        geometry_msgs::msg::TransformStamped tf_msg;
+        tf_msg.header.stamp = now_time;
+        tf_msg.header.frame_id = "odom";
+        tf_msg.child_frame_id = "base_footprint";
+        tf_msg.transform.translation.x = odom_msg.pose.pose.position.x;
+        tf_msg.transform.translation.y = odom_msg.pose.pose.position.y;
+        tf_msg.transform.translation.z = odom_msg.pose.pose.position.z;
+        tf_msg.transform.rotation = odom_msg.pose.pose.orientation;
+        tf_broadcaster_->sendTransform(tf_msg);
+
+        // 3. Publish Joint State
+        sensor_msgs::msg::JointState joint_msg;
+        joint_msg.header.stamp = now_time;
+        joint_msg.name.push_back("left_joint");
+        joint_msg.name.push_back("right_joint");
+
+        double linear_vel = odom_msg.twist.twist.linear.x;
+        double angular_vel = odom_msg.twist.twist.angular.z;
+
+        const double wheel_separation = 0.25;
+        const double wheel_radius = 0.0325;
+
+        double left_wheel_vel = (linear_vel - angular_vel * wheel_separation / 2.0) / wheel_radius;
+        double right_wheel_vel = (linear_vel + angular_vel * wheel_separation / 2.0) / wheel_radius;
+
+        left_pos_ += left_wheel_vel * dt;
+        right_pos_ += right_wheel_vel * dt;
+
+        joint_msg.position.push_back(left_pos_);
+        joint_msg.position.push_back(right_pos_);
+        joint_msg.velocity.push_back(left_wheel_vel);
+        joint_msg.velocity.push_back(right_wheel_vel);
+
+        joint_pub_->publish(joint_msg);
+    }
+
+    void check_timeout()
+    {
+        // 1. Nếu pipeline đang TẮT (mất kết nối phần cứng) -> Liên tục báo lỗi về GUI & thử kết nối lại
+        if (!pipe_running_) {
+            publish_camera_status(false);
+            RCLCPP_WARN_THROTTLE(this->get_logger(), *this->get_clock(), 2000, 
+                "[CẢNH BÁO] Phần cứng Camera chưa sẵn sàng. Đang thử kết nối lại ngầm...");
+            init_camera();
+            return;
+        }
+
+        // 2. Nếu pipeline BẬT nhưng chưa nhận được frame nào (Đang khởi động)
+        if (!first_frame_received_) {
+            RCLCPP_WARN_THROTTLE(this->get_logger(), *this->get_clock(), 2000, 
+                "[ĐANG CHỜ] Pipeline chạy nhưng CHƯA nhận được frame dữ liệu nào. Đang đợi...");
+            return;
+        }
+
+        // 3. Kiểm tra trễ khung hình (Rớt mạng/ Đứt cáp giữa chừng)
+        auto now = this->now();
+        double dt = (now - last_frame_time_).seconds();
+
+        if (dt > 1.0)
+        {
+            publish_camera_status(false); // Báo ngay cho GUI biết để phanh Robot lại
+            RCLCPP_ERROR(this->get_logger(), "[CRITICAL] Mất dữ liệu (>1s)! Ngắt Pipeline hiện tại để Reset.");
+
+            if (pipe_running_)
+            {
+                try {
+                    pipe_.stop();
+                } catch (...) {}
+                pipe_running_ = false;
+                first_frame_received_ = false;
+            }
+            // LƯU Ý: Tuyệt đối không gọi rclcpp::shutdown() ở đây để Node còn sống mà kết nối lại!
+        }
+    }
+
+    bool find_device_with_pose_stream(std::string &serial)
+    {
+        rs2::context ctx;
+        auto devices = ctx.query_devices();
+
+        if (devices.size() == 0) return false;
+
+        for (auto &&dev : devices)
+        {
+            serial = dev.get_info(RS2_CAMERA_INFO_SERIAL_NUMBER);
+            try
+            {
+                rs2::pipeline temp_pipe;
+                rs2::config temp_cfg;
+                temp_cfg.enable_device(serial);
+                temp_cfg.enable_stream(RS2_STREAM_POSE);
+                return true;
+            }
+            catch (const rs2::error &e)
+            {
+                RCLCPP_WARN(this->get_logger(), "Device %s error: %s", serial.c_str(), e.what());
+                continue;
+            }
+        }
+        serial.clear();
+        return false;
+    }
+
+    rs2::pipeline pipe_;
+    std::atomic<bool> pipe_running_;
+
+    rclcpp::Publisher<nav_msgs::msg::Odometry>::SharedPtr odom_pub_;
+    rclcpp::Publisher<std_msgs::msg::Bool>::SharedPtr status_pub_;
+    std::shared_ptr<tf2_ros::TransformBroadcaster> tf_broadcaster_;
+    std::shared_ptr<tf2_ros::StaticTransformBroadcaster> static_tf_broadcaster_;
+    rclcpp::Publisher<sensor_msgs::msg::JointState>::SharedPtr joint_pub_;
+
+    rclcpp::TimerBase::SharedPtr watchdog_timer_;
+    rclcpp::TimerBase::SharedPtr heartbeat_timer_;
+    rclcpp::Time last_frame_time_;
+    std::atomic<bool> first_frame_received_{false};
+
+    double left_pos_ = 0.0;
+    double right_pos_ = 0.0;
+};
+
+int main(int argc, char *argv[])
+{
+    rclcpp::init(argc, argv);
+    std::cout << "[SYSTEM] Khởi chạy hàm main()..." << std::endl;
+    try
+    {
+        auto node = std::make_shared<PoseOdomPublisher>();
+        RCLCPP_INFO(node->get_logger(), "[SYSTEM] Khởi tạo Node thành công. Đang tiến vào trạng thái Spin.");
+        rclcpp::spin(node);
+    }
+    catch (const std::exception &e)
+    {
+        std::cerr << "[Main] Error: " << e.what() << std::endl;
+    }
+
+    std::cout << "[SYSTEM] Kết thúc hàm main(), đang đóng node." << std::endl;
+    if (rclcpp::ok()) rclcpp::shutdown();
+    return 0;
+}

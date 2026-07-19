@@ -153,14 +153,12 @@ try:
     while True:
         frames = pipe.poll_for_frames()
         if not frames:
-            publish_camera_status(False)
             time.sleep(0.01)
             continue
             
         f1 = frames.get_fisheye_frame(1)
         f2 = frames.get_fisheye_frame(2)
         if not f1 or not f2:
-            publish_camera_status(False)
             continue
             
         current_time = time.time()
@@ -296,6 +294,7 @@ except KeyboardInterrupt:
     print("\n[HỆ THỐNG] Đang ngắt luồng...")
     
 finally:
+    publish_camera_status(False)
     # Ghi kết thúc log
     log_file.write("\n" + "=" * 50 + "\n")
     log_file.write(f"End Time: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}\n")
@@ -308,8 +307,6 @@ finally:
     print(f"\n[DONE] Đã ghi {frame_count} frame dữ liệu vào:")
     print(f"  - Log file: {log_filename}")
     print(f"  - CSV file: {csv_filename}")
-    
-    publish_camera_status(False)
 
     pipe.stop()
     
