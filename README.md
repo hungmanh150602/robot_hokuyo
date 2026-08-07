@@ -1,7 +1,7 @@
 # robot_hokuyo
 Dự án này bao gồm các tính năng xây dựng bản đồ dùng SLAM, dẫn hướng cho robot dùng NAV2, theo dõi người sử dụng lidar và camera nhận diện người.
 Ngoài ra, dự án này cũng bao gồm thiết kế 1 giao diện hỗ trợ tương tác người dùng.
-<img width="471" height="331" alt="image" src="https://github.com/user-attachments/assets/bd695c48-112a-49c6-93ff-499a18c1bbe1" />
+<img width="1356" height="793" alt="image" src="https://github.com/user-attachments/assets/376930f5-6546-43da-9b69-1e8d2f578aea" />
 
 Đầu tiên, để có thể sử dụng được dự án này, bạn cần tạo 1 workspace ros2 sau đó thêm package này vào
 
