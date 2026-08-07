@@ -45,3 +45,7 @@ ros2 run robot_hokuyo person_tracker_node --ros-args --params-file /home/user_na
 # Cách 2: Chạy các tác vụ trên bằng cách sử dụng giao diện
 # =============== run gui app =============== #
 ros2 run robot_hokuyo robot_gui
+
+# Giao diện người dùng
+<img width="936" height="512" alt="image" src="https://github.com/user-attachments/assets/ba440b6d-a71c-494b-9e37-5f42772437d4" />
+
